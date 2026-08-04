@@ -1,0 +1,101 @@
+site_name: PortPy
+site_description: Portfolio analysis, risk, and performance metrics that explain themselves.
+site_url: https://Arthur-Faugeron.github.io/PortPy/
+repo_url: https://github.com/Arthur-Faugeron/PortPy
+repo_name: Arthur-Faugeron/PortPy
+edit_uri: edit/main/docs/
+
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - toc.follow
+    - content.code.copy
+    - content.action.edit
+    - search.suggest
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Guide:
+      - The Portfolio object: guide/portfolio.md
+      - Weights & short positions: guide/weights.md
+      - Calendars & currencies: guide/calendars-and-currency.md
+      - Explainability: guide/explainability.md
+  - API Reference:
+      - Overview: api/index.md
+      - Portfolio: api/portfolio.md
+      - core: api/core.md
+      - explain: api/explain.md
+      - metrics:
+          - Overview: api/metrics/index.md
+          - returns: api/metrics/returns.md
+          - risk: api/metrics/risk.md
+          - performance: api/metrics/performance.md
+          - drawdowns: api/metrics/drawdowns.md
+          - rolling: api/metrics/rolling.md
+          - distributions: api/metrics/distributions.md
+          - benchmarks: api/metrics/benchmarks.md
+          - regressions: api/metrics/regressions.md
+          - covariance: api/metrics/covariance.md
+          - summary: api/metrics/summary.md
+          - costs: api/metrics/costs.md
+  - Architecture: architecture.md
+  - Roadmap: roadmap.md
+  - Changelog: changelog.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_signature_annotations: true
+            separate_signature: true
+            merge_init_into_class: true
+            members_order: source
+            group_by_category: false
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Arthur-Faugeron/PortPy
