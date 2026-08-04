@@ -1,12 +1,12 @@
 # Architecture & Design
 
 > This is PortPy's internal design document: the full package structure, public API surface,
-> and stage-by-stage build plan. If you just want to *use* PortPy, start with
-> [Getting Started](getting-started.md) instead — this page is for contributors and anyone
+> and stage-by-stage build plan. If you just want to use PortPy, start with
+> [Getting Started](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/getting-started.md) instead — this page is for contributors and anyone
 > curious how the pieces fit together, including the parts (`models`, `strategies`,
 > `visualization`) that don't exist yet.
 
-**PortPy** is a Python package for quantitative portfolio analysis, performance measurement, risk assessment, and strategy backtesting. The design centers on a single **`Portfolio`** object that encapsulates all data (prices/returns and weights) and provides a unified interface for metrics, visualization, models, and strategies. This document defines the package's structure, core components, public API, and development roadmap.
+**PortPy** is a Python package for quantitative portfolio analysis, performance measurement, risk assessment, and strategy backtesting. The design centers on a single `Portfolio` object that encapsulates all data (prices/returns and weights) and provides a unified interface for metrics, visualization, models, and strategies. This document defines the package's structure, core components, public API, and development roadmap.
 
 ---
 
@@ -135,7 +135,7 @@ The `Portfolio` class is the central object. It holds:
 
 ### 4.2 Metrics (via `.metrics`)
 
-Every function in `portpy.metrics` is available as `portfolio.metrics.<name>(...)`. Parameters named `returns`, `y`, `prices`, `weights`, or `cov_matrix` are auto-filled from the portfolio when the call uses only keyword arguments; `rf` and `periods_per_year` default to the portfolio's own `risk_free_rate` and `frequency`. See the [API reference](api/metrics/index.md) for the full list, grouped by submodule (returns, risk, performance, drawdowns, rolling, distributions, benchmarks, regressions, covariance, summary, costs).
+Every function in `portpy.metrics` is available as `portfolio.metrics.<name>(...)`. Parameters named `returns`, `y`, `prices`, `weights`, or `cov_matrix` are auto-filled from the portfolio when the call uses only keyword arguments; `rf` and `periods_per_year` default to the portfolio's own `risk_free_rate` and `frequency`. See the [API reference](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/api/metrics/index.md) for the full list, grouped by submodule (returns, risk, performance, drawdowns, rolling, distributions, benchmarks, regressions, covariance, summary, costs).
 
 ### 4.3 Visualization (via `.visualization`) — not yet implemented
 
@@ -153,13 +153,13 @@ Planned: a `BaseStrategy` interface, a `backtest()` engine, and concrete strateg
 
 ## 5. Explainability (`portpy.explain`)
 
-Every metric can explain itself. `Explanation` is a structured knowledge card (summary, formula, how-to-read, good-vs-bad, caveats, and an optional `interpret` function that turns a live value into a one-line verdict), registered per-function at the bottom of the module that defines it. `MetricResult` is a `float` subclass carrying its own name, unit, and `.explain()` method. `portpy.explain(name_or_result)` is the single dispatch point — see [The Explainability Layer](guide/explainability.md).
+Every metric can explain itself. `Explanation` is a structured knowledge card (summary, formula, how-to-read, good-vs-bad, caveats, and an optional `interpret` function that turns a live value into a one-line verdict), registered per-function at the bottom of the module that defines it. `MetricResult` is a `float` subclass carrying its own name, unit, and `.explain()` method. `portpy.explain(name_or_result)` is the single dispatch point — see [The Explainability Layer](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/explainability.md).
 
 ---
 
 ## 6. Stage Plan
 
-### Stage 1 — Metrics & Core — **done, this release**
+### Stage 1 — Metrics & Core — **DONE**
 
 All of `portpy.metrics` (returns, risk, performance, drawdowns, rolling, distributions, benchmarks, regressions, covariance, summary, costs) and `portpy.core` (asset tagging, calendar alignment, currency conversion, weight normalization), each with full type hints, docstrings, and a registered `Explanation`.
 
@@ -175,7 +175,7 @@ Factor models, stochastic process simulation/calibration, Monte Carlo (VaR/CVaR,
 
 `BaseStrategy`, a `backtest()` engine, position sizing (Kelly, vol targeting), a library of concrete strategies (buy-and-hold, momentum variants, mean-reversion, pairs trading, breakout, vol targeting, factor tilt, sector rotation), and evaluation tooling (walk-forward analysis, Monte Carlo robustness).
 
-See [Roadmap](roadmap.md) for the current, plain-language version of this table.
+See [Roadmap](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/roadmap.md) for the current, plain-language version of this table.
 
 ---
 

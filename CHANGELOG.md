@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2026-08-04
 
 First release. Metrics and core are implemented and tested; visualization, models, and
-strategies are designed but not yet built — see [docs/roadmap.md](docs/roadmap.md).
+strategies are designed but not yet built — see [docs/roadmap.md](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/roadmap.md).
 
 ### Added
 
@@ -17,16 +17,16 @@ strategies are designed but not yet built — see [docs/roadmap.md](docs/roadmap
   positions supported), asset-class tags, and a `.metrics` namespace that auto-fills
   `returns`/`prices`/`weights`/`rf`/`periods_per_year` from the portfolio's own state on
   keyword-only calls.
-- **`portpy.metrics`** (78 functions across 11 submodules): `returns`, `risk`, `performance`,
-  `drawdowns`, `rolling`/expanding windows, `distributions`, `benchmarks`
-  (alpha/beta/capture ratios), `regressions` (OLS via statsmodels), `covariance`
-  (portfolio-level risk decomposition: variance, diversification ratio, marginal/component
-  contribution to risk), one-shot `summary` tables, and transaction-`costs` helpers. Most
-  scalar metrics accept `as_result=True` to get a self-explaining `MetricResult` back.
-- **`portpy.core`**: `align_calendars` / `calendar_coverage_report` / `detect_frequency` for
-  combining assets that trade on different calendars (e.g. 24/7 crypto with Mon-Fri
-  equities); `convert_to_base_currency` for multi-currency portfolios; `equal_weights` /
-  `normalize_weights` for weight validation (including long/short books).
+- **`portpy.metrics`**: `returns`, `risk`, `performance`, `drawdowns`, `rolling`, 
+  `distributions`, `benchmarks` (alpha/beta/capture ratios), `regressions` 
+  (OLS via statsmodels), `covariance`(portfolio-level risk decomposition: variance, 
+  diversification ratio, marginal/component contribution to risk), one-shot 
+  `summary` tables, and transaction-`costs` helpers. Most scalar metrics accept 
+  `as_result=True` to get a self-explaining `MetricResult` back.
+- **`portpy.core`**: `calendars` for combining assets that trade on different calendars 
+  (e.g. 24/7 crypto with Mon-Fri equities); `currency` for multi-currency portfolios; 
+  `weights` for weight validation (including long/short books); and `asset` to represent
+  individual assets.
 - **`portpy.explain`**: the explainability layer — `Explanation` knowledge cards registered
   per metric (what it is, formula, how to read it, good vs. bad, caveats, a value-specific
   verdict), `MetricResult` (a `float` subclass carrying its own name/unit/interpretation),
@@ -35,7 +35,7 @@ strategies are designed but not yet built — see [docs/roadmap.md](docs/roadmap
   `tutorial.ipynb` — a full walkthrough of every metric function against three real
   long/short, multi-asset portfolios built from live Alpaca (stocks/ETFs/crypto) and FRED
   (risk-free rate) data.
-- **Tests**: unit coverage for every metric module plus
+- **Tests**: unit coverage for every metric module, core of portpy, plus
   `tests/validation/test_vs_empyrical_quantstats.py`, cross-checking PortPy's numbers
   against `empyrical` and `quantstats` on synthetic and real (yfinance) market data.
 - **Docs**: a full guide + API reference site (`mkdocs` + `mkdocstrings`) covering the
@@ -47,4 +47,4 @@ strategies are designed but not yet built — see [docs/roadmap.md](docs/roadmap
 ### Known limitations
 
 - `portpy.visualization`, `portpy.models`, and `portpy.strategies` are designed (see
-  [docs/architecture.md](docs/architecture.md)) but not implemented in this release.
+  [docs/architecture.md](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/architecture.md)) but not implemented in this release.

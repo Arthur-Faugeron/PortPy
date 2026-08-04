@@ -1,7 +1,8 @@
 # Roadmap
 
 PortPy is built in stages. This page is the plain-language status; see
-[Architecture](architecture.md) for the full design document each stage is built from.
+[Architecture](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/architecture.md) 
+for the full design document each stage is built from.
 
 ## Stage 1 — Metrics & Core — done (this release, v0.1.0)
 
@@ -44,5 +45,5 @@ robustness).
 
 ---
 
-Contributions toward any stage are welcome — open an issue on
+Contributions and corrections toward any stage are welcome — open an issue on
 [GitHub](https://github.com/Arthur-Faugeron/PortPy/issues) to discuss scope before a large PR.

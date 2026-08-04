@@ -1,8 +1,10 @@
 # covariance
 
+
 Multi-asset, portfolio-level risk. This is the one category with no equivalent in
-`empyrical` or `quantstats` — both operate on a single, already-aggregated return stream,
+empyrical or quantstats — both operate on a single, already-aggregated return stream,
 never a weighted book of assets.
+
 
 ::: portpy.metrics.covariance
     options:

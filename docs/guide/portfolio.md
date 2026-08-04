@@ -9,10 +9,10 @@ every function in `portpy.metrics` as a bound method under `.metrics`.
 from portpy import Portfolio
 
 portfolio = Portfolio(
-    data,                      # DataFrame: columns = assets, index = DatetimeIndex
-    input_type="prices",       # or "returns"
-    weights=None,               # Series/dict/array; defaults to equal weight (1/N)
-    name="My Portfolio",
+    data,                        # DataFrame: columns = assets, index = DatetimeIndex
+    input_type="prices",         # or "returns"
+    weights=None,                # Series/dict/array; defaults to equal weight (1/N)
+    name="My Portfolio",         # String name used in explanations and plots
     frequency=252,               # trading periods/year (365 for a 24/7 crypto calendar)
     risk_free_rate=0.0,          # annual rate
     asset_classes=None,          # optional {symbol: AssetClass} tags
@@ -52,19 +52,19 @@ inspects its signature and fills in, **from the portfolio itself**, any paramete
 - `rf` → `portfolio.risk_free_rate`
 - `periods_per_year` → `portfolio.frequency`
 
-This only happens **on keyword-only calls** — passing *any* positional argument disables
+This only happens **on keyword-only calls** — passing any positional argument disables
 auto-fill for that call entirely, and every parameter falls back to the plain function's own
 default instead of the portfolio's:
 
 ```python
-portfolio.metrics.volatility()                    # uses portfolio.frequency (e.g. 365)
-portfolio.metrics.volatility(periods_per_year=252) # override just this one
-portfolio.metrics.volatility(portfolio.returns(), True)  # positional - periods_per_year
+portfolio.metrics.volatility()                             # uses portfolio.frequency (e.g. 365)
+portfolio.metrics.volatility(periods_per_year=252)         # override just this one
+portfolio.metrics.volatility(portfolio.returns(), True)    # positional - periods_per_year
                                                            # silently reverts to the function's
                                                            # own default of 252, NOT 365
 ```
 
-That last line is the one real gotcha: mixing positional args with an expectation of
+That last line is the most essential: mixing positional args with an expectation of
 auto-fill. Stick to keyword arguments when calling `.metrics.*` and this never bites you.
 
 Parameters that aren't on that list (`benchmark`, `beta`, `method`, `n`, `window`, ...) are

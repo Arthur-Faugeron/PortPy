@@ -1,14 +1,17 @@
-"""01 - Getting started with PortPy, using real data from yfinance.
+"""
+01 - Getting started with PortPy, using real data from yfinance.
 
 This example is the "hello world" of PortPy: it shows the full flow a new user
-goes through -
+goes through:
 
     1. Acquire raw data (yfinance)
     2. Clean it into the shape PortPy expects (a DataFrame of prices, one
        column per asset, sorted DatetimeIndex, no surprises)
-    3. Build a `Portfolio`
+    3. Build a Portfolio
     4. Compute metrics - and, the feature that makes PortPy different from a
-       plain numbers-out library, ask each metric to *explain itself*
+       plain numbers-out library, ask each metric to explain itself
+
+Requires yfinance python library -> pip install yfinance
 
 Run:
     python examples/01_yfinance_getting_started.py
@@ -20,7 +23,10 @@ import pandas as pd
 import yfinance as yf
 
 from portpy import Portfolio
+from portpy import explain as portpy_explain
 
+
+# For prettier console output for tables.
 pd.set_option("display.width", 120)
 pd.set_option("display.float_format", lambda v: f"{v:,.4f}")
 
@@ -34,7 +40,7 @@ def fetch_prices(tickers: list[str], period: str = "3y") -> pd.DataFrame:
     raw = yf.download(tickers, period=period, auto_adjust=True, progress=False)
 
     # yfinance's multi-ticker download returns MultiIndex columns: (field, ticker).
-    # `auto_adjust=True` already folds splits and dividends into the price series
+    # auto_adjust=True already folds splits and dividends into the price series
     # (this is the single most important cleaning step for equities - without it,
     # a stock split shows up as a fake -50% "return").
     prices = raw["Close"]
@@ -105,8 +111,7 @@ def main() -> None:
     comparison = portfolio.metrics.compare_to_benchmark(benchmark=benchmark_returns)
     print(comparison)
 
-    from portpy import explain as portpy_explain
-
+    print("\n" + "=" * 70)
     portpy_explain("compare_to_benchmark")
 
 

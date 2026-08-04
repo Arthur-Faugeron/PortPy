@@ -31,7 +31,7 @@ by how much, before you pick a fix.
 ```python
 from portpy.core import align_calendars
 
-align_calendars(combined, method="intersection")   # business days only; drops crypto's weekend moves
+align_calendars(combined, method="intersection")    # business days only; drops crypto's weekend moves
 align_calendars(combined, method="ffill_union")     # every day crypto trades; carries Friday's equity close through the weekend
 align_calendars(combined, method="business_days")   # standardize on Mon-Fri, forward-filling gaps
 ```

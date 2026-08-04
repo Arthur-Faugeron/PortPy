@@ -1,8 +1,9 @@
 name: Docs
 
 # Builds and publishes the mkdocs site to GitHub Pages on every push to main.
-# Requires GitHub Pages to be enabled for this repo with source = "GitHub Actions"
-# (Settings -> Pages -> Build and deployment -> Source).
+# Requires GitHub Pages to be enabled for this repo with source = GitHub Actions
+# (Settings -> Pages -> Build and deployment -> Source). --- DONE
+
 on:
   push:
     branches: [main]

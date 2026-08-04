@@ -59,9 +59,9 @@ portfolio.weights
 Notice the weights were rescaled so they still sum to 1 (net exposure), while the *relative*
 proportions you specified (0.5 : 0.5 : -0.2) are preserved. `.returns()` then combines each
 asset's return by its (possibly negative) weight every period — no special-casing needed
-anywhere else in the library. `portpy.metrics.covariance.portfolio_variance` and friends use
+anywhere else in the library. `portpy.metrics.covariance.portfolio_variance` and others use
 the same signed weight vector, so risk decomposition (marginal/component contribution to
-risk) correctly attributes risk *reduction* to a short that's negatively correlated with the
+risk) correctly attributes risk reduction to a short that's negatively correlated with the
 rest of the book.
 
 ## Changing weights later
@@ -70,7 +70,7 @@ rest of the book.
 portfolio.set_weights({"AAPL": 0.7, "MSFT": 0.3})  # re-validates and re-normalizes
 ```
 
-There is no rebalancing/turnover engine yet (see [Roadmap](../roadmap.md) —
+There is no rebalancing/turnover engine yet (see [Roadmap](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/roadmap.md) —
 `portpy.strategies` isn't built). `set_weights` just replaces the static weight vector used by
 every subsequent `.metrics` call; see `portpy.metrics.costs` if you want to model transaction
 costs against an assumed weight-history `DataFrame` you construct yourself.

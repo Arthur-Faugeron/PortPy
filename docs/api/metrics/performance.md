@@ -1,5 +1,12 @@
 # performance
 
+
+Functions for evaluating risk-adjusted portfolio performance. These metrics measure
+how efficiently a portfolio converts risk into return using different definitions 
+of risk, including total volatility, downside risk, drawdowns, and benchmark-relative
+performance.
+
+
 ::: portpy.metrics.performance
     options:
       members:

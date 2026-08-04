@@ -1,13 +1,14 @@
-"""02 - Multi-asset portfolios with Alpaca data: calendars and currencies.
+"""
+02 - Multi-asset portfolios with Alpaca data: calendars and currencies.
 
-This example tackles the two trickiest data-engineering problems in portfolio
+This example tackles two tricky data-engineering problems in portfolio
 analysis, both called out explicitly in PortPy's design:
 
-    1. **Calendar mismatch**: crypto trades 24/7, equities/commodities/bonds trade ~5 days/week.
+    1. Calendar mismatch: crypto trades 24/7, equities/commodities/bonds trade ~5 days/week.
        Naively combining them produces NaNs (or, worse, silently misaligned
        returns if you don't notice).
-    2. **Currency mismatch**: not every asset is quoted in the same currency.
-       PortPy assumes a single base currency by default, but if you *do* have
+    2. Currency mismatch: not every asset is quoted in the same currency.
+       PortPy assumes a single base currency by default, but if you do have
        dated FX rates, it can convert for you.
 
 Data sources are deliberately mixed to mirror a real institutional multi-asset portfolio over 3 years:
@@ -15,7 +16,7 @@ Data sources are deliberately mixed to mirror a real institutional multi-asset p
       and Crypto (BTC/USD, ETH/USD) from Alpaca.
     - Euro-denominated European stock (SAP.DE) and its FX rate (EURUSD=X) from yfinance.
 
-Requires a `.env` file with `ALPACA_KEY` and `ALPACA_SECRET` (see `.env.example`).
+Requires a .env file with ALPACA_KEY and ALPACA_SECRET (see .env.example).
 
 Run:
     python examples/02_alpaca_multiasset_calendar.py
@@ -36,18 +37,21 @@ from dotenv import load_dotenv
 from portpy import Portfolio
 from portpy.core import AssetClass, align_calendars, calendar_coverage_report, convert_to_base_currency
 
+
+# For prettier console output of wide DataFrames (like the covariance matrix)
 pd.set_option("display.width", 120)
 pd.set_option("display.float_format", lambda v: f"{v:,.4f}")
+
 
 LOOKBACK_DAYS = 3 * 365  # 3-year historical lookback window
 
 
 def fetch_alpaca_bars(client, request_cls, symbols: list[str], **client_kwargs) -> pd.DataFrame:
-    """Fetch daily close prices for `symbols` from an Alpaca historical data client.
+    """Fetch daily close prices for symbols from an Alpaca historical data client.
 
     Alpaca returns a (symbol, timestamp) MultiIndex with tz-aware UTC
     timestamps - this reshapes it into the wide, tz-naive, one-column-per-asset
-    DataFrame that `Portfolio` (and `align_calendars`) expect.
+    DataFrame that Portfolio (and align_calendars) expect.
     """
     request = request_cls(
         symbol_or_symbols=symbols,

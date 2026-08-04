@@ -2,9 +2,7 @@
 
 **Portfolio analysis that explains itself.**
 
-PortPy is a Python library for portfolio performance measurement and risk analysis, built
-around one object — `Portfolio` — and one idea: every number it gives you can explain,
-in plain language, what it is, how to read it, and whether it's good or bad.
+PortPy is a Python library for portfolio performance measurement and risk analysis, built around one object — `Portfolio` — and one idea: every number it gives you can explain, in plain language, what it is, how to read it, and whether it's good or bad.
 
 [![CI](https://github.com/Arthur-Faugeron/PortPy/actions/workflows/ci.yml/badge.svg)](https://github.com/Arthur-Faugeron/PortPy/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -74,13 +72,13 @@ pip install "portpy[all]"        # everything
 
 ## Documentation
 
-- [Getting Started](docs/getting-started.md)
-- [User Guide](docs/index.md) — the `Portfolio` object, weights & shorts, calendar/currency
+- [Getting Started](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/getting-started.md)
+- [User Guide](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/index.md) — the `Portfolio` object, weights & shorts, calendar/currency
   alignment, the explainability layer
-- [API Reference](docs/api/index.md) — every function, by module
-- [Roadmap](docs/roadmap.md) — what's implemented today vs. planned (`models`, `strategies`,
+- [API Reference](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/api/index.md) — every function, by module
+- [Roadmap](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/roadmap.md) — what's implemented today vs. planned (`models`, `strategies`,
   `visualization` are not yet built)
-- [`examples/`](examples/) — runnable scripts and a full tutorial notebook exercising every
+- [`examples/`](https://github.com/Arthur-Faugeron/PortPy/blob/main/examples/) — runnable scripts and a full tutorial notebook exercising every
   metric against live Alpaca + Fed (FRED) data
 
 ## Status
@@ -88,7 +86,7 @@ pip install "portpy[all]"        # everything
 PortPy is pre-1.0 (`Development Status :: 4 - Beta`). **Metrics and core** (calendar/currency
 alignment, weights, the explainability layer) are implemented and tested. **Visualization,
 models/optimization, and strategies/backtesting** are designed but not yet built — see the
-[Roadmap](docs/roadmap.md).
+[Roadmap](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/roadmap.md).
 
 ## License
 

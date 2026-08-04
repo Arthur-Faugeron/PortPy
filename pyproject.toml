@@ -8,8 +8,10 @@ version = "0.1.0"
 description = "Portfolio analysis, optimization, and management with built-in, human-readable explanations of every metric, chart, model, and strategy."
 readme = "README.md"
 requires-python = ">=3.10"
-license = "MIT"
-authors = [{ name = "Arthur Faugeron" }]
+license = { file = "LICENSE" }
+authors = [
+    { name = "Arthur Lino Faugeron Jacono", email = "faugeronarthur@gmail.com" }
+]
 keywords = [
     "finance",
     "portfolio",
@@ -63,6 +65,7 @@ Changelog = "https://github.com/Arthur-Faugeron/PortPy/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/portpy"]
+include = ["src/portpy/py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -9,10 +9,10 @@ pip install portpy
 Optional extras:
 
 ```bash
-pip install "portpy[viz]"    # plotly, matplotlib, seaborn (for future visualization work)
-pip install "portpy[models]" # scikit-learn, arch, hmmlearn (for future models work)
-pip install "portpy[data]"   # yfinance, alpaca-py, python-dotenv (to run examples/)
-pip install "portpy[all]"    # everything above
+pip install "portpy[viz]"      # plotly, matplotlib, seaborn (for future visualization work)
+pip install "portpy[models]"   # scikit-learn, arch, hmmlearn (for future models work)
+pip install "portpy[data]"     # yfinance, alpaca-py, python-dotenv (to run examples/)
+pip install "portpy[all]"      # everything above
 ```
 
 Core dependencies (`numpy`, `pandas`, `scipy`, `statsmodels`) are always installed. PortPy
@@ -53,7 +53,7 @@ from portpy import Portfolio
 
 portfolio = Portfolio(
     prices,
-    weights={"AAPL": 0.6, "MSFT": 0.4},   # optional - defaults to equal weight
+    weights={"AAPL": 0.6, "MSFT": 0.4},     # optional - defaults to equal weight
     name="Tech Portfolio",
     frequency=252,                          # trading periods/year, for annualization
     risk_free_rate=0.04,                    # annual rate, used as the default `rf`
@@ -67,7 +67,7 @@ Every function in `portpy.metrics` is available as a method on `.metrics`, with 
 portfolio's own returns/weights/risk-free rate/frequency filled in automatically:
 
 ```python
-portfolio.metrics.sharpe_ratio()          # float
+portfolio.metrics.sharpe_ratio()                # float
 portfolio.metrics.sharpe_ratio(as_result=True)  # MetricResult - carries .explain()
 
 portfolio.metrics.max_drawdown(as_result=True).explain()
@@ -86,16 +86,16 @@ Compare against a benchmark:
 ```python
 import pandas as pd
 
-benchmark_returns = pd.Series(...)  # e.g. SPY daily returns, same date range
+benchmark_returns = pd.Series(...)                 # e.g. SPY daily returns, same date range
 portfolio.metrics.compare_to_benchmark(benchmark=benchmark_returns)
 ```
 
 ## Next steps
 
-- [The Portfolio object](guide/portfolio.md) — what `.metrics` auto-fills, and what it doesn't.
-- [Weights & short positions](guide/weights.md) — building a long/short book.
-- [Calendars & currencies](guide/calendars-and-currency.md) — combining crypto with equities,
+- [The Portfolio object](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/portfolio.md) — what `.metrics` auto-fills, and what it doesn't.
+- [Weights & short positions](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/weights.md) — building a long/short book.
+- [Calendars & currencies](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/calendars-and-currency.md) — combining crypto with equities,
   or assets in different currencies.
-- [Explainability](guide/explainability.md) — how `.explain()` works.
+- [Explainability](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/explainability.md) — how `.explain()` works.
 - Run [`examples/tutorial.ipynb`](https://github.com/Arthur-Faugeron/PortPy/blob/main/examples/tutorial.ipynb)
   for an exhaustive, working tour of every metric function.

@@ -31,7 +31,7 @@ venv/
 ENV/
 env/
 
-# Testing / coverage / linting
+# Testing, coverage, linting
 .pytest_cache/
 .coverage
 .coverage.*

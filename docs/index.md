@@ -13,22 +13,22 @@ portfolio.metrics.sharpe_ratio(as_result=True).explain()
 
 <div class="grid cards" markdown>
 
-- **[Getting Started](getting-started.md)**
+- **[Getting Started](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/getting-started.md)**
   Install PortPy, build your first `Portfolio`, and compute your first metrics.
 
-- **[The Portfolio object](guide/portfolio.md)**
+- **[The Portfolio object](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/portfolio.md)**
   Prices vs. returns, weights, frequency, risk-free rate, and what `.metrics` auto-fills for you.
 
-- **[Weights & short positions](guide/weights.md)**
+- **[Weights & short positions](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/weights.md)**
   Long/short books, `normalize_weights`, and how negative weights flow through every metric.
 
-- **[Calendars & currencies](guide/calendars-and-currency.md)**
+- **[Calendars & currencies](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/calendars-and-currency.md)**
   Combining 24/7 crypto with Mon-Fri equities, and converting multi-currency prices to one base.
 
-- **[Explainability](guide/explainability.md)**
+- **[Explainability](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/explainability.md)**
   How `.explain()` works, where the text comes from, and `MetricResult`.
 
-- **[API Reference](api/index.md)**
+- **[API Reference](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/api/index.md)**
   Every function, grouped by module, generated straight from the docstrings.
 
 </div>
@@ -49,5 +49,6 @@ Two things distinguish PortPy from a plain metrics library like `empyrical` or `
 
 `portpy.visualization`, `portpy.models` (optimization, factor models, Monte Carlo), and
 `portpy.strategies` (backtesting) are designed but not implemented in this release. See the
-[Roadmap](roadmap.md) for what's planned, and [Architecture](architecture.md) for the full
-design document.
+[Roadmap](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/roadmap.md) for what's 
+planned, and [Architecture](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/architecture.md) 
+for the full design document.

@@ -1,6 +1,6 @@
 # Explainability
 
-`portpy.explain` is what turns PortPy from a "numbers out" library into a teaching tool.
+`portpy.explain()` is what turns PortPy from a "numbers out" library into a teaching tool.
 Every metric can render a plain-language card describing itself, and every result can carry
 its own name so `.explain()` works without you having to remember what produced it.
 
@@ -11,9 +11,9 @@ its own name so `.explain()` works without you having to remember what produced 
 one-line verdict.
 
 **A registry** — a plain `dict[str, Explanation]`, populated by `register(Explanation(...))`
-calls sitting at the bottom of every metrics module, right next to the function they
-document. The text is hand-written prose baked into the source at import time — there's no
-dynamic generation, no docstring parsing, no LLM in the loop. For example, in
+calls sitting at the bottom of every metrics module. The text is hand-written prose placed 
+into the source at import time — there's no dynamic generation, no docstring parsing, 
+no LLM in the loop. For example, in
 [`returns.py`](https://github.com/Arthur-Faugeron/PortPy/blob/main/src/portpy/metrics/returns.py):
 
 ```python
@@ -39,7 +39,7 @@ interop), but also carries the metric's registered `name` and an `.explain()` me
 ```python
 sharpe = portfolio.metrics.sharpe_ratio(as_result=True)
 
-float(sharpe)          # 0.74 - just a number
+float(sharpe)           # 0.74 - just a number
 sharpe.interpretation   # "sub-par" - the one-line verdict, computed from the live value
 sharpe.explain()        # the full card, printed
 ```
@@ -49,28 +49,30 @@ sharpe.explain()        # the full card, printed
 ```python
 import portpy
 
-portpy.explain("sharpe_ratio")   # look up by registered name directly
-portpy.explain(sharpe)            # a MetricResult - uses its .name and its own value
-portpy.explain(comparison_df)     # any object with `.attrs["portpy_explanation"]`,
+portpy.explain("sharpe_ratio")      # look up by registered name directly
+portpy.explain(sharpe)              # a MetricResult - uses its .name and its own value
+portpy.explain(comparison_df)       # any object with `.attrs["portpy_explanation"]`,
                                     # e.g. the DataFrame returned by compare_to_benchmark()
 ```
 
-!!! note "Importing `portpy.explain`"
-    `from portpy import Portfolio` also binds the name `explain` on the `portpy` package to
-    the **function**, not the module (see `portpy/__init__.py`'s
-    `from portpy.explain import explain`). To reach the registry helpers directly
-    (`available()`, `get()`, `register()`, `Explanation`, `MetricResult`), import them from
-    the submodule explicitly:
-    ```python
-    from portpy.explain import available, get, MetricResult
-    ```
+!!! note 
+
+"Importing `portpy.explain`"
+`from portpy import Portfolio` also binds the name `explain` on the `portpy` package to
+the **function**, not the module (see `portpy/__init__.py`'s
+`from portpy.explain import explain`). To reach the registry helpers directly
+(`available()`, `get()`, `register()`, `Explanation`, `MetricResult`), import them from
+the submodule explicitly:
+```python
+from portpy.explain import available, get, MetricResult
+```
 
 ## Listing what's registered
 
 ```python
 from portpy.explain import available
 
-available("metric")   # every registered metric name
+available("metric")    # every registered metric name
 available("chart")     # rolling/other chart-shaped explanations (drawdown_chart, etc.)
 ```
 
