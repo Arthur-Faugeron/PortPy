@@ -1,10 +1,8 @@
 # distributions
 
-
 Functions for analyzing the statistical distribution of portfolio returns. These 
 metrics summarize return characteristics, assess normality, measure the frequency 
 and magnitude of gains and losses, and provide data for tables and visualizations.
-
 
 ::: portpy.metrics.distributions
     options:

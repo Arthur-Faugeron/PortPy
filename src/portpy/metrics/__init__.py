@@ -1,4 +1,5 @@
-"""Pure, stateless metric functions, grouped by topic.
+"""
+Pure, stateless metric functions, grouped by topic.
 
 Every public function here also works standalone (pass a plain pandas Series/
 DataFrame) - :class:`~portpy.portfolio.Portfolio` methods are thin wrappers

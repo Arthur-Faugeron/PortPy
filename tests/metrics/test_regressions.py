@@ -4,7 +4,6 @@ import pytest
 
 from portpy.metrics import regressions as m
 
-
 def test_linear_regression_recovers_known_beta():
     rng = np.random.default_rng(41)
     idx = pd.bdate_range("2020-01-01", periods=500)

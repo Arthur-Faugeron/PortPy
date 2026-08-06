@@ -1,8 +1,6 @@
 # summary
 
-
 One-shot aggregate summaries built out of the other metric modules.
-
 
 ::: portpy.metrics.summary
     options:

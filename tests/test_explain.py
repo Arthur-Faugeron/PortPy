@@ -84,3 +84,11 @@ def test_explanation_invalid_category_raises():
             how_to_read="x",
             good_vs_bad="x",
         )
+
+
+def test_package_level_explain_api_is_callable_and_exposes_registry_helpers():
+    import portpy as pt
+
+    assert callable(pt.explain)
+    assert "sharpe_ratio" in pt.explain.available()
+    assert pt.explain.get("sharpe_ratio").name == "sharpe_ratio"

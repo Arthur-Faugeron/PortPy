@@ -1,6 +1,6 @@
 # Explainability
 
-`portpy.explain()` is what turns PortPy from a "numbers out" library into a teaching tool.
+The `portpy.explain()` is what turns PortPy from a "numbers out" library into a teaching tool.
 Every metric can render a plain-language card describing itself, and every result can carry
 its own name so `.explain()` works without you having to remember what produced it.
 

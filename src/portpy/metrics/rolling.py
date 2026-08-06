@@ -1,7 +1,8 @@
-"""Rolling and expanding-window metric engines.
+"""
+Rolling and expanding-window metric engines.
 
-`rolling_metric` / `expanding_metric` are the generic engines the more specific
-helpers below are built on - use them directly to roll *any* PortPy metric
+rolling_metric / expanding_metric are the generic engines the more specific
+helpers below are built on - use them directly to roll any PortPy metric
 function (or your own) over a window.
 """
 
@@ -33,16 +34,17 @@ def rolling_metric(
     min_periods: int | None = None,
     **kwargs,
 ) -> pd.Series:
-    """Apply any Series -> float metric function over a rolling window.
+    """
+    Apply any Series -> float metric function over a rolling window.
 
     Args:
-        func: A callable taking a `pd.Series` window (plus `**kwargs`) and
+        func: A callable taking a pd.Series window (plus **kwargs) and
             returning a float - any PortPy metric function works directly
-            (pass `as_result=False`, the default, since MetricResult inside a
+            (pass as_result=False, the default, since MetricResult inside a
             rolling apply adds no value).
         window: Window size, in periods.
         min_periods: Minimum observations required to produce a value;
-            defaults to `window` (no partial windows).
+            defaults to window (no partial windows).
     """
     return returns.rolling(window, min_periods=min_periods or window).apply(
         lambda x: func(pd.Series(x, copy=False), **kwargs), raw=False
@@ -55,7 +57,9 @@ def expanding_metric(
     min_periods: int = 2,
     **kwargs,
 ) -> pd.Series:
-    """Apply any Series -> float metric function over an expanding (growing) window."""
+    """
+    Apply any Series -> float metric function over an expanding (growing) window.
+    """
     return returns.expanding(min_periods=min_periods).apply(
         lambda x: func(pd.Series(x, copy=False), **kwargs), raw=False
     )
@@ -67,7 +71,10 @@ def rolling_sharpe(
     rf: float = DEFAULT_RISK_FREE_RATE,
     periods_per_year: int = TRADING_DAYS_PER_YEAR,
 ) -> pd.Series:
-    """Sharpe ratio recomputed over a trailing window - shows whether risk-adjusted performance is stable or decaying."""
+    """
+    Sharpe ratio recomputed over a trailing window. 
+    Shows whether risk-adjusted performance is stable or decaying.
+    """
     from portpy.metrics.performance import sharpe_ratio
 
     return rolling_metric(
@@ -81,7 +88,9 @@ def rolling_volatility(
     annualized: bool = True,
     periods_per_year: int = TRADING_DAYS_PER_YEAR,
 ) -> pd.Series:
-    """Standard deviation recomputed over a trailing window - reveals volatility clustering/regime shifts."""
+    """
+    Standard deviation recomputed over a trailing window, reveals volatility clustering/regime shifts.
+    """
     vol = returns.rolling(window, min_periods=window).std(ddof=1)
     if annualized:
         vol = vol * np.sqrt(periods_per_year)
@@ -89,7 +98,10 @@ def rolling_volatility(
 
 
 def rolling_beta(returns: pd.Series, benchmark: pd.Series, window: int) -> pd.Series:
-    """Beta recomputed over a trailing window - reveals whether market sensitivity is stable over time."""
+    """
+    Beta recomputed over a trailing window.
+    It reveals whether market sensitivity is stable over time.
+    """
     r, b = align_pair(returns, benchmark)
     cov = r.rolling(window, min_periods=window).cov(b)
     var = b.rolling(window, min_periods=window).var(ddof=1)
@@ -97,7 +109,9 @@ def rolling_beta(returns: pd.Series, benchmark: pd.Series, window: int) -> pd.Se
 
 
 def rolling_correlation(returns_a: pd.Series, returns_b: pd.Series, window: int) -> pd.Series:
-    """Pearson correlation recomputed over a trailing window."""
+    """
+    Pearson correlation recomputed over a trailing window.
+    """
     a, b = align_pair(returns_a, returns_b, "series_a", "series_b")
     return a.rolling(window, min_periods=window).corr(b).rename("rolling_correlation")
 
@@ -106,10 +120,12 @@ register(
     Explanation(
         name="rolling_sharpe",
         category="chart",
-        summary="Sharpe ratio recomputed on a trailing window (e.g. 6 or 12 months) at every point in time, instead of once over the whole history.",
-        how_to_read="A flat, high line means consistently good risk-adjusted performance. A line that decays toward zero or goes negative flags performance that hasn't held up recently, even if the full-history Sharpe still looks good.",
-        good_vs_bad="Prefer strategies whose rolling Sharpe stays consistently positive and doesn't show a strong recent downtrend.",
-        caveats="Short windows are noisy; a single bad week can swing a 3-month rolling Sharpe a lot. Use a window long enough to contain multiple return cycles.",
+        summary="Sharpe ratio recalculated over a moving historical window to show whether risk-adjusted performance is stable, improving, or deteriorating through time.",
+        formula="(average_return - risk_free_rate) / standard_deviation_of_returns",
+        how_to_read="A consistently positive value indicates returns have compensated for risk during that period. Declining values indicate weakening risk-adjusted performance.",
+        good_vs_bad="Prefer strategies with stable positive rolling Sharpe values rather than short periods of unusually high performance.",
+        caveats="Rolling Sharpe is sensitive to the chosen window size. Short windows react quickly but are noisy, while long windows are more stable but slower to detect changes.",
+        interpret=lambda v: f"{v:.2f}",
     )
 )
 
@@ -117,9 +133,12 @@ register(
     Explanation(
         name="rolling_volatility",
         category="chart",
-        summary="Annualized volatility recomputed on a trailing window - the standard way to see volatility clustering (calm periods vs. turbulent ones).",
-        how_to_read="Spikes usually coincide with market stress; a rising baseline over time suggests the strategy/asset is structurally getting riskier.",
-        good_vs_bad="Lower and more stable is generally more comfortable to hold, though it depends entirely on the strategy's goals (a vol-targeting strategy *should* show a flat line by design).",
+        summary="Volatility recalculated over a moving historical window to identify changes in risk levels, volatility clustering, and market regimes.",
+        formula="rolling_standard_deviation(returns) * sqrt(periods_per_year)",
+        how_to_read="Higher values indicate periods where returns are fluctuating more. Sudden increases often correspond to market stress or uncertainty.",
+        good_vs_bad="Stable volatility is usually easier to manage. Rapid increases suggest rising portfolio risk and possible regime changes.",
+        caveats="Volatility measures past variability, not future risk. The selected rolling window strongly affects how quickly changes appear.",
+        interpret=lambda v: f"{v:.2%}",
     )
 )
 
@@ -127,9 +146,12 @@ register(
     Explanation(
         name="rolling_beta",
         category="chart",
-        summary="Beta to a benchmark recomputed on a trailing window - shows whether market sensitivity is stable or shifts over time.",
-        how_to_read="A beta that jumps around a lot (e.g. from 0.5 to 1.5) means the portfolio's relationship to the benchmark is unstable - risk models calibrated on the full-history beta may be unreliable going forward.",
-        good_vs_bad="Stability is usually more important than the specific level - a portfolio with a steady beta of 0.8 is easier to risk-manage than one oscillating between 0.3 and 1.3.",
+        summary="Beta recalculated over a moving historical window to show how portfolio sensitivity to a benchmark changes over time.",
+        formula="covariance(asset_returns, benchmark_returns) / variance(benchmark_returns)",
+        how_to_read="Values above 1 indicate the portfolio tends to amplify benchmark movements. Values below 1 indicate lower sensitivity.",
+        good_vs_bad="Stable beta values make risk management easier. Large shifts indicate changing market exposure or unstable relationships.",
+        caveats="Beta depends on the selected benchmark and rolling window. Historical relationships may break during market regime changes.",
+        interpret=lambda v: f"{v:.2f}",
     )
 )
 
@@ -137,8 +159,35 @@ register(
     Explanation(
         name="rolling_correlation",
         category="chart",
-        summary="Correlation between two return series recomputed on a trailing window.",
-        how_to_read="Values near +1 mean the series move together; near -1 they move oppositely; near 0 they're roughly independent over that window.",
-        good_vs_bad="For diversification purposes, lower (or more negative) is usually better between assets in the same portfolio. Watch for correlations that spike toward +1 during market stress ('correlations go to 1 in a crisis').",
+        summary="Correlation between two return series recalculated over a moving historical window to show whether their relationship changes through time.",
+        formula="covariance(asset_a, asset_b) / (volatility_a * volatility_b)",
+        how_to_read="Values near 1 indicate the assets move together. Values near -1 indicate opposite movement. Values near 0 indicate weak relationship.",
+        good_vs_bad="Lower correlation between portfolio assets generally improves diversification. Rising correlation can reduce diversification benefits.",
+        caveats="Correlation is dynamic and can increase sharply during market stress, reducing the protection expected from diversification.",
+        interpret=lambda v: f"{v:.2f}",
+    )
+)
+
+register(
+    Explanation(
+        name="rolling_metric",
+        category="function",
+        summary="Generic engine that applies any metric function repeatedly over a moving historical window.",
+        formula="metric(window_returns_t)",
+        how_to_read="Each output value represents the metric calculated using only the observations inside the current rolling window.",
+        good_vs_bad="Useful for detecting changes in strategy behavior, risk, and performance characteristics over time.",
+        caveats="The usefulness depends on the metric being applied and the chosen window size. Short windows increase noise while long windows reduce responsiveness.",
+    )
+)
+
+register(
+    Explanation(
+        name="expanding_metric",
+        category="function",
+        summary="Generic engine that applies any metric function using an expanding dataset that starts small and grows as new observations arrive.",
+        formula="metric(all_returns_available_until_t)",
+        how_to_read="The metric starts with limited information and becomes more stable as more observations accumulate.",
+        good_vs_bad="Useful for tracking how estimates converge over time and how early performance compares with long-term history.",
+        caveats="Early values can be unreliable because they are calculated from very few observations.",
     )
 )

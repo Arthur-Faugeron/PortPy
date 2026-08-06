@@ -32,7 +32,8 @@ pd.set_option("display.float_format", lambda v: f"{v:,.4f}")
 
 
 def fetch_prices(tickers: list[str], period: str = "3y") -> pd.DataFrame:
-    """Download daily close prices for a list of tickers and return a clean wide DataFrame.
+    """
+    Download daily close prices for a list of tickers and return a clean wide DataFrame.
 
     Cleaning steps explained inline below - this is the part every PortPy user
     has to do themselves, since PortPy deliberately does not fetch or clean data.

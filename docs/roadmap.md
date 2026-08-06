@@ -46,4 +46,4 @@ robustness).
 ---
 
 Contributions and corrections toward any stage are welcome — open an issue on
-[GitHub](https://github.com/Arthur-Faugeron/PortPy/issues) to discuss scope before a large PR.
+[GitHub](https://github.com/Arthur-Faugeron/PortPy/issues) to discuss scope.

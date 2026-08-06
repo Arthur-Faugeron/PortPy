@@ -1,4 +1,5 @@
-"""Calendar-alignment helpers for combining assets with different trading calendars.
+"""
+Calendar-alignment helpers for combining assets with different trading calendars.
 
 PortPy's `Portfolio` never aligns or fills data for you (see the package README) -
 if you build a DataFrame from, say, Bitcoin (trades every day) and a stock (trades
@@ -15,7 +16,8 @@ _METHODS = ("intersection", "ffill_union", "business_days")
 
 
 def detect_frequency(index: pd.DatetimeIndex) -> str:
-    """Roughly classify a DatetimeIndex's spacing (informational only).
+    """
+    Roughly classify a DatetimeIndex's spacing (informational only).
 
     Returns one of: "daily-7" (includes weekends, e.g. crypto), "daily-5" (business
     days, e.g. equities/bonds), "weekly", "monthly", "irregular", or "unknown" (too
@@ -42,7 +44,8 @@ def align_calendars(
     prices: dict[str, pd.Series] | pd.DataFrame,
     method: str = "intersection",
 ) -> pd.DataFrame:
-    """Combine assets that trade on different calendars into one aligned DataFrame.
+    """
+    Combine assets that trade on different calendars into one aligned DataFrame.
 
     Args:
         prices: Either a dict of ``{asset_name: price_series}`` or an already-
@@ -85,7 +88,8 @@ def align_calendars(
 
 
 def calendar_coverage_report(prices: pd.DataFrame) -> pd.DataFrame:
-    """Per-asset diagnostic: detected frequency, date range, and NaN count.
+    """
+    Per-asset diagnostic: detected frequency, date range, and NaN count.
 
     Run this before choosing an `align_calendars` method - it tells you which
     assets are actually mismatched and by how much.

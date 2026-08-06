@@ -4,7 +4,6 @@ import pytest
 
 from portpy.core.currency import convert_to_base_currency
 
-
 @pytest.fixture
 def prices_and_fx():
     idx = pd.bdate_range("2020-01-01", periods=5)

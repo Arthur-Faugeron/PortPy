@@ -5,7 +5,6 @@ import pytest
 from portpy import Portfolio
 from portpy.core.weights import equal_weights
 
-
 def test_portfolio_requires_dataframe():
     with pytest.raises(TypeError):
         Portfolio(pd.Series([1.0, 2.0]))

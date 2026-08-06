@@ -1,4 +1,5 @@
-"""Optional currency-conversion helper.
+"""
+Optional currency-conversion helper.
 
 By default, PortPy assumes every asset in your DataFrame is denominated in the
 same currency and never converts anything. If you *do* have a dated FX-rate
@@ -17,7 +18,8 @@ def convert_to_base_currency(
     asset_currencies: dict[str, str],
     base_currency: str,
 ) -> pd.DataFrame:
-    """Convert a multi-asset price DataFrame into a single base currency.
+    """
+    Convert a multi-asset price DataFrame into a single base currency.
 
     Args:
         prices: Columns = asset symbols, index = dates, values = prices in each

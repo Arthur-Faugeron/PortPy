@@ -1,9 +1,7 @@
 # benchmarks
 
-
 Functions for comparing portfolio performance against a benchmark. These metrics
 measure active return, market sensitivity, and relative performance.
-
 
 ::: portpy.metrics.benchmarks
     options:

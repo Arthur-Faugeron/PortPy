@@ -1,4 +1,6 @@
-"""One-shot aggregate summaries built out of the other metric modules."""
+"""
+One-shot aggregate summaries built out of the other metric modules.
+"""
 
 from __future__ import annotations
 
@@ -24,7 +26,9 @@ def tearsheet_summary(
     rf: float = DEFAULT_RISK_FREE_RATE,
     periods_per_year: int = TRADING_DAYS_PER_YEAR,
 ) -> dict:
-    """Compute the key headline metrics in one call, each as a self-explaining `MetricResult`."""
+    """
+    Compute the key headline metrics in one call, each as a self-explaining MetricResult.
+    """
     r = returns.dropna()
     price_series = prices if prices is not None else _returns.prices_from_returns(r)
 
@@ -51,7 +55,9 @@ def compare_to_benchmark(
     rf: float = DEFAULT_RISK_FREE_RATE,
     periods_per_year: int = TRADING_DAYS_PER_YEAR,
 ) -> pd.DataFrame:
-    """Side-by-side portfolio-vs-benchmark table: absolute metrics for both, plus relative metrics."""
+    """
+    Side-by-side portfolio-vs-benchmark table: absolute metrics for both, plus relative metrics.
+    """
     r, b = align_pair(returns, benchmark)
     synthetic_r = _returns.prices_from_returns(r)
     synthetic_b = _returns.prices_from_returns(b)
@@ -101,9 +107,12 @@ register(
     Explanation(
         name="tearsheet_summary",
         category="metric",
-        summary="A one-call snapshot of the headline metrics an analyst checks first: return, risk, and risk-adjusted performance.",
-        how_to_read="Each entry is a MetricResult - call `.explain()` on any individual value (e.g. `summary['sharpe_ratio'].explain()`) for its own detailed card.",
-        good_vs_bad="See each individual metric's own explanation - this is an index into them, not a graded metric itself.",
+        summary="A complete portfolio overview combining return, risk, drawdown, distribution, and risk-adjusted performance metrics into a single analysis output.",
+        formula="summary = {performance_metrics + risk_metrics + drawdown_metrics + distribution_metrics}",
+        how_to_read="Review the metrics together rather than individually. Returns describe reward, volatility and drawdowns describe risk, and ratios describe the efficiency of the return generated.",
+        good_vs_bad="A strong portfolio typically shows competitive returns, controlled volatility, limited drawdowns, favorable risk-adjusted ratios, and consistent return behavior.",
+        caveats="The summary does not rank portfolios automatically. Different strategies optimize different combinations of return, risk, liquidity, and drawdown characteristics.",
+        interpret=lambda v: "Portfolio performance and risk summary",
     )
 )
 
@@ -111,8 +120,11 @@ register(
     Explanation(
         name="compare_to_benchmark",
         category="metric",
-        summary="A side-by-side table of the portfolio vs. a benchmark: absolute metrics for both (return, volatility, Sharpe, max drawdown) plus relative metrics that only make sense for the portfolio (beta, alpha, correlation, capture ratios).",
-        how_to_read="The 'difference' column is `portfolio - benchmark` where both exist; it's NaN for relative-only rows (beta, alpha, etc.) since there's no benchmark-side equivalent to subtract.",
-        good_vs_bad="A positive difference on return/Sharpe and a less-negative difference on max_drawdown are the 'beating the benchmark, more safely' pattern to look for.",
+        summary="A structured comparison between a portfolio and a benchmark showing absolute performance, risk characteristics, and benchmark-relative statistics.",
+        formula="comparison = portfolio_metrics - benchmark_metrics + relative_metrics",
+        how_to_read="Positive differences generally indicate portfolio outperformance for return-based metrics. For risk metrics, the preferred direction depends on the objective, such as lower volatility or smaller drawdown.",
+        good_vs_bad="A favorable comparison usually combines higher risk-adjusted returns, lower downside risk, positive alpha, strong information ratio, and appropriate benchmark exposure.",
+        caveats="The quality of the comparison depends on benchmark selection. A poorly chosen benchmark can make relative performance conclusions misleading.",
+        interpret=lambda v: "Portfolio versus benchmark comparison table",
     )
 )

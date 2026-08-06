@@ -1,6 +1,5 @@
 # core
 
-
 Asset-class tagging, calendar alignment, currency conversion, and weight 
 normalization — all opt-in helpers you call before constructing a Portfolio. 
 See the
@@ -8,7 +7,6 @@ See the
 and
 [Weights & short positions](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/weights.md) 
 guides for worked examples.
-
 
 ## Asset tagging
 

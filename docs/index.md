@@ -1,7 +1,6 @@
 # PortPy
 
 Portfolio analysis, risk, and performance metrics that explain themselves.
-
 PortPy centers on one object, `Portfolio`, which holds your price/return data and weights and
 exposes every metric through a single, self-documenting namespace:
 

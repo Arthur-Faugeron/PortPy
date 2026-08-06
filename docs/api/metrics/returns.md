@@ -1,11 +1,9 @@
 # returns
 
-
 Functions for computing, transforming, and summarizing portfolio returns. These 
 metrics cover the full return workflow, from converting prices into returns and 
 rebuilding price series to calculating cumulative, annualized, excess, and 
 benchmark-relative performance.
-
 
 ::: portpy.metrics.returns
     options:

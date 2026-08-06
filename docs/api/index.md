@@ -1,9 +1,7 @@
 # API Reference
 
-
 Generated from docstrings. Every function also documents its own parameters, return type,
 and — where relevant — the exact formula it computes.
-
 
 | Submodule | Covers |
 |---|---|

@@ -1,4 +1,5 @@
-"""PortPy's built-in explainability layer.
+"""
+PortPy's built-in explainability layer.
 
 This is what turns PortPy from a "numbers and charts out" library into a teaching
 tool: every metric, chart, model, and strategy can tell you, in plain language,
@@ -9,16 +10,16 @@ Three pieces work together:
 - :class:`Explanation` - a structured knowledge card (what it is / how to read it /
   good vs. bad / caveats / formula), optionally with a function that turns a
   concrete computed value into a one-line verdict.
-- A module-level registry mapping names (``"sharpe_ratio"``, ``"drawdown_chart"``,
-  ``"capm"``, ``"buy_and_hold"``, ...) to their :class:`Explanation`.
-- :class:`MetricResult` - a ``float`` subclass returned by metric functions when
-  ``as_result=True``. It behaves exactly like a float everywhere (math, comparisons,
-  formatting, numpy/pandas operations) but also carries a ``.explain()`` method and
-  a ``.interpretation`` property.
+- A module-level registry mapping names ("sharpe_ratio", "drawdown_chart",
+  "capm", "buy_and_hold", ...) to their :class:`Explanation`.
+- :class:`MetricResult` - a float subclass returned by metric functions when
+  as_result=True. It behaves exactly like a float everywhere (math, comparisons,
+  formatting, numpy/pandas operations) but also carries a .explain() method and
+  a .interpretation property.
 
-The same registry backs charts (``fig.explain()`` in :mod:`portpy.visualization`),
-models, and strategies (``.describe()`` / ``.diagnose()`` in :mod:`portpy.models`
-and :mod:`portpy.strategies`), so ``portpy.explain(x)`` works uniformly on any of
+The same registry backs charts (fig.explain() in :mod:`portpy.visualization`),
+models, and strategies (.describe() / .diagnose() in :mod:`portpy.models`
+and :mod:`portpy.strategies`), so portpy.explain(x) works uniformly on any of
 them.
 """
 
@@ -37,17 +38,18 @@ __all__ = [
     "available",
 ]
 
-_CATEGORIES = ("metric", "chart", "model", "strategy")
+_CATEGORIES = ("metric", "chart", "model", "strategy", "function")
 
 
 @dataclass(frozen=True)
 class Explanation:
-    """A structured, human-readable knowledge card attached to a PortPy object.
+    """
+    A structured, human-readable knowledge card attached to a PortPy object.
 
     Attributes:
         name: Registry key, matching the function/chart/model/strategy name
-            (e.g. ``"sharpe_ratio"``, ``"drawdown_chart"``, ``"capm"``).
-        category: One of ``"metric"``, ``"chart"``, ``"model"``, ``"strategy"``.
+            (e.g. "sharpe_ratio", "drawdown_chart", "capm").
+        category: One of "metric", "chart", "model", "strategy".
         summary: One or two sentences on what this *is*.
         how_to_read: How to read the number/axis/output in practice.
         good_vs_bad: Rules of thumb for judging whether a value is good or bad.
@@ -71,7 +73,9 @@ class Explanation:
             raise ValueError(f"category must be one of {_CATEGORIES}, got {self.category!r}")
 
     def render(self, value: Any = None) -> str:
-        """Render this card as plain text, optionally with a value-specific verdict."""
+        """
+        Render this card as plain text, optionally with a value-specific verdict.
+        """
         lines = [f"{self.name} ({self.category})", "=" * len(f"{self.name} ({self.category})")]
         lines += ["", "What it is:", f"  {self.summary}"]
         if self.formula:
@@ -92,13 +96,17 @@ _REGISTRY: dict[str, Explanation] = {}
 
 
 def register(explanation: Explanation) -> Explanation:
-    """Register (or overwrite) an :class:`Explanation` in the global registry."""
+    """
+    Register (or overwrite) an :class:`Explanation` in the global registry.
+    """
     _REGISTRY[explanation.name] = explanation
     return explanation
 
 
 def get(name: str) -> Explanation:
-    """Look up a registered :class:`Explanation` by name."""
+    """
+    Look up a registered :class:`Explanation` by name.
+    """
     try:
         return _REGISTRY[name]
     except KeyError as exc:
@@ -109,23 +117,25 @@ def get(name: str) -> Explanation:
 
 
 def available(category: str | None = None) -> list[str]:
-    """List registered explanation names, optionally filtered by category."""
+    """
+    List registered explanation names, optionally filtered by category."""
     if category is None:
         return sorted(_REGISTRY)
     return sorted(k for k, v in _REGISTRY.items() if v.category == category)
 
 
 def explain(obj: Any, *, value: Any = None, print_it: bool = True) -> str:
-    """Explain a metric name, :class:`MetricResult`, chart, model, or strategy.
+    """
+    Explain a metric name, :class:`MetricResult`, chart, model, or strategy.
 
     Args:
-        obj: A registered name (``str``), a :class:`MetricResult`, or any PortPy
-            object that exposes a ``_portpy_explain_name`` attribute (charts, fitted
-            models, strategies) or a pandas ``.attrs["portpy_explanation"]`` entry.
+        obj: A registered name (str), a :class:`MetricResult`, or any PortPy
+            object that exposes a _portpy_explain_name attribute (charts, fitted
+            models, strategies) or a pandas .attrs["portpy_explanation"] entry.
         value: Optional concrete value to generate a one-line verdict for. Inferred
             automatically for :class:`MetricResult` and objects carrying
-            ``_portpy_explain_value``.
-        print_it: If True (default), also ``print()`` the rendered text.
+            _portpy_explain_value.
+        print_it: If True (default), also print() the rendered text.
 
     Returns:
         The rendered explanation text.
@@ -160,16 +170,17 @@ def explain(obj: Any, *, value: Any = None, print_it: bool = True) -> str:
 
 
 class MetricResult(float):
-    """A ``float`` that also knows what it means.
+    """
+    A float that also knows what it means.
 
-    Arithmetic, comparisons, ``round()``, string formatting, and numpy/pandas
+    Arithmetic, comparisons, round(), string formatting, and numpy/pandas
     interop all work exactly as they would on a plain float (this *is* a float
-    subclass). On top of that, it carries the metric's registered ``name`` and can
+    subclass). On top of that, it carries the metric's registered name and can
     render a full explanation on demand.
 
     Note:
-        ``str(result)`` prints the plain number (so ``print(sharpe)`` stays clean);
-        ``repr(result)`` - what you see when a bare expression is evaluated in a
+        str(result) prints the plain number (so print(sharpe) stays clean);
+        repr(result) - what you see when a bare expression is evaluated in a
         REPL/notebook - includes the name and a one-line interpretation.
     """
 
@@ -196,7 +207,9 @@ class MetricResult(float):
 
     @property
     def interpretation(self) -> str:
-        """A one-line, value-specific verdict (empty string if none is registered)."""
+        """
+        A one-line, value-specific verdict (empty string if none is registered).
+        """
         expl = _REGISTRY.get(self.name)
         if expl is None or expl.interpret is None:
             return ""
@@ -206,7 +219,9 @@ class MetricResult(float):
             return ""
 
     def explain(self, print_it: bool = True) -> str:
-        """Print (by default) and return the full explanation for this result."""
+        """
+        Print (by default) and return the full explanation for this result.
+        """
         return explain(self, print_it=print_it)
 
     def __str__(self) -> str:

@@ -4,7 +4,6 @@ import pytest
 
 from portpy.metrics import covariance as m
 
-
 @pytest.fixture
 def two_asset_returns(business_day_index):
     rng = np.random.default_rng(51)

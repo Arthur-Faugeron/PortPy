@@ -1,7 +1,7 @@
 # Weights & Short Positions
 
 Weights are just a `pandas.Series` indexed by asset name, summing to 1. PortPy allows negative
-entries by default — a negative weight is a short position, and every metric downstream
+entries by default, a negative weight is a short position, and every metric downstream
 (returns, risk, drawdowns, covariance decomposition, ...) treats it exactly as you'd expect:
 a negative-weighted asset's losses become the portfolio's gains, and vice versa.
 

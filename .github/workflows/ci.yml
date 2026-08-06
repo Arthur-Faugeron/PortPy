@@ -1,7 +1,7 @@
 name: CI
 
-# If a commit introduces a bug, breaks a Python version, 
-# or violates formatting rules, GitHub marks the commit.
+# If a commit introduces a bug, breaks a Python version, # or violates formatting 
+# rules, GitHub marks the commit.
 
 on:
   push:

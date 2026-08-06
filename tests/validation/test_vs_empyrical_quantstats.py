@@ -1,15 +1,15 @@
-"""Cross-validation of PortPy's metrics against `empyrical` and `quantstats`.
+"""Cross-validation of PortPy's metrics against empyrical and quantstats.
 
 Where the three libraries share the same methodology (annualization by period
 count, rf=0 for a clean comparison), results should match to numerical
 precision. Where PortPy deliberately uses a different, documented convention
-(e.g. `cagr`'s calendar-based competitors, or annual vs. per-period `rf`), that
+(e.g. cagr's calendar-based competitors, or annual vs. per-period rf), that
 difference is asserted explicitly instead of silently ignored - see the
 docstring on each test for the specific methodological note.
 
-Synthetic-data tests always run. Real-data tests (`@pytest.mark.network`)
-download from `yfinance` and are excluded by default in CI (see pyproject's
-`-m "not network"`), but are the ones that matter most for the "does this hold
+Synthetic-data tests always run. Real-data tests (@pytest.mark.network)
+download from yfinance and are excluded by default in CI (see pyproject's
+-m "not network"), but are the ones that matter most for the "does this hold
 up on real market data" question - run them locally with:
     pytest -m network tests/validation
 """
@@ -37,8 +37,6 @@ def _run_full_comparison(r: pd.Series, b: pd.Series) -> None:
     b = b.reindex(r.index).dropna()
     r = r.reindex(b.index).dropna()
     b = b.reindex(r.index)
-
-    # --- Same methodology at rf=0 / mar=0: expect near-exact agreement ---
 
     assert perf.sharpe_ratio(r, rf=0.0) == pytest.approx(empyrical.sharpe_ratio(r, risk_free=0.0), abs=ABS_TOL)
     assert perf.sharpe_ratio(r, rf=0.0) == pytest.approx(float(qs.sharpe(r, rf=0.0)), abs=ABS_TOL)
@@ -82,15 +80,15 @@ def _run_full_comparison(r: pd.Series, b: pd.Series) -> None:
 
     # --- Documented methodology differences: same ballpark, not exact ---
 
-    # portpy's `cagr` uses period-count years (n/periods_per_year, matching
-    # empyrical's own `annual_return`); quantstats' `cagr` uses actual elapsed
+    # portpy's cagr uses period-count years (n/periods_per_year, matching
+    # empyrical's own annual_return); quantstats' cagr uses actual elapsed
     # calendar days instead. Both are legitimate, common conventions - they
     # should agree closely on daily data with few gaps, but not bit-for-bit.
     portpy_cagr = rts.cagr(synthetic_prices)
     qs_cagr = float(qs.cagr(r))
     assert portpy_cagr == pytest.approx(qs_cagr, rel=0.05)
 
-    # portpy's `rf`/`mar` are ANNUAL rates (de-annualized internally); at rf=0
+    # portpy's rf/mar are ANNUAL rates (de-annualized internally); at rf=0
     # this is moot (0 annual == 0 per-period), which is exactly why the sharpe/
     # sortino checks above use rf=0 as the apples-to-apples case. A non-zero-rf
     # check demonstrating the conversion explicitly:

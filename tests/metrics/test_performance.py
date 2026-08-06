@@ -5,7 +5,6 @@ import pytest
 from portpy.metrics import performance as m
 from portpy.utils.validation import periodic_rate_from_annual
 
-
 def test_sharpe_ratio_zero_rf_matches_manual(normal_returns):
     mu, sigma = normal_returns.mean(), normal_returns.std(ddof=1)
     expected = mu / sigma * np.sqrt(252)

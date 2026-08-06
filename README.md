@@ -64,10 +64,10 @@ This result:
 ## Install
 
 ```bash
-pip install portpy               # core: numpy, pandas, scipy, statsmodels
-pip install "portpy[viz]"        # + plotly, matplotlib, seaborn
-pip install "portpy[data]"       # + yfinance, alpaca-py (for the examples)
-pip install "portpy[all]"        # everything
+pip install portpy-quant               # core: numpy, pandas, scipy, statsmodels
+pip install "portpy-quant[viz]"        # + plotly, matplotlib, seaborn
+pip install "portpy-quant[data]"       # + yfinance, alpaca-py (for the examples)
+pip install "portpy-quant[all]"        # everything
 ```
 
 ## Documentation

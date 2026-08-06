@@ -1,4 +1,5 @@
-"""Input-validation helpers shared by :mod:`portpy.portfolio` and the metric functions.
+"""
+Input-validation helpers shared by :mod:`portpy.portfolio` and the metric functions.
 
 PortPy never silently fixes malformed input (wrong index type, duplicate dates,
 unsorted data) - these helpers raise clear errors instead, because silently
@@ -12,7 +13,9 @@ import pandas as pd
 
 
 def ensure_datetime_index(data: pd.Series | pd.DataFrame, name: str = "data") -> pd.Series | pd.DataFrame:
-    """Raise if `data` isn't indexed by a sorted, duplicate-free DatetimeIndex."""
+    """
+    Raise if `data` isn't indexed by a sorted, duplicate-free DatetimeIndex.
+    """
     if not isinstance(data.index, pd.DatetimeIndex):
         raise TypeError(
             f"{name} must be indexed by a pandas DatetimeIndex, got {type(data.index).__name__}. "
@@ -42,7 +45,9 @@ def validate_confidence(confidence: float) -> None:
 
 
 def to_series(data: pd.Series | pd.DataFrame, column: str | None = None, name: str = "data") -> pd.Series:
-    """Coerce a single-column DataFrame (or an explicit column) down to a Series."""
+    """
+    Coerce a single-column DataFrame (or an explicit column) down to a Series.
+    """
     if isinstance(data, pd.Series):
         return data
     if isinstance(data, pd.DataFrame):
@@ -57,7 +62,8 @@ def to_series(data: pd.Series | pd.DataFrame, column: str | None = None, name: s
 
 
 def align_pair(a: pd.Series, b: pd.Series, name_a: str = "returns", name_b: str = "benchmark") -> tuple[pd.Series, pd.Series]:
-    """Inner-join two return series on their index and drop rows where either is NaN.
+    """
+    Inner-join two return series on their index and drop rows where either is NaN.
 
     Raises if the overlap is empty - a common silent bug when comparing series that
     don't actually share any dates (e.g. different calendars or date ranges).
@@ -72,12 +78,16 @@ def align_pair(a: pd.Series, b: pd.Series, name_a: str = "returns", name_b: str 
 
 
 def periodic_rate_from_annual(annual_rate: float, periods_per_year: int) -> float:
-    """Convert an annual rate to a per-period rate via geometric (compounding) de-annualization."""
+    """
+    Convert an annual rate to a per-period rate via geometric (compounding) de-annualization.
+    """
     return (1.0 + annual_rate) ** (1.0 / periods_per_year) - 1.0
 
 
 def safe_divide(numerator: float, denominator: float) -> float:
-    """Divide, returning +/-inf (or 0 if numerator is also 0) instead of raising on a zero denominator."""
+    """
+    Divide, returning +/-inf (or 0 if numerator is also 0) instead of raising on a zero denominator.
+    """
     if abs(denominator) < 1e-15:
         if abs(numerator) < 1e-15:
             return 0.0

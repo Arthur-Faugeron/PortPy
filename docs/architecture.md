@@ -1,10 +1,10 @@
 # Architecture & Design
 
-> This is PortPy's internal design document: the full package structure, public API surface,
-> and stage-by-stage build plan. If you just want to use PortPy, start with
-> [Getting Started](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/getting-started.md) instead — this page is for contributors and anyone
-> curious how the pieces fit together, including the parts (`models`, `strategies`,
-> `visualization`) that don't exist yet.
+> This is PortPy's internal design document: the full package structure, public API 
+> surface, and stage-by-stage build plan. If you just want to use PortPy, start with
+> [Getting Started](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/getting-started.md) 
+> instead — this page is for contributors and anyone curious how the pieces fit 
+> together, including the parts (`models`, `strategies`,`visualization`) that don't exist yet.
 
 **PortPy** is a Python package for quantitative portfolio analysis, performance measurement, risk assessment, and strategy backtesting. The design centers on a single `Portfolio` object that encapsulates all data (prices/returns and weights) and provides a unified interface for metrics, visualization, models, and strategies. This document defines the package's structure, core components, public API, and development roadmap.
 

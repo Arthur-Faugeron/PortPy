@@ -21,7 +21,7 @@ portfolio = Portfolio(
 
 Validation happens at construction time: the index must be a sorted, duplicate-free
 `DatetimeIndex`, and there must be at least two observations. PortPy raises rather than
-silently fixing malformed input — see [Calendars & currencies](calendars-and-currency.md) for
+silently fixing malformed input — see [Calendars & currencies](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/calendars-and-currency.md) for
 why (mixed trading calendars are the usual cause).
 
 ## Accessors

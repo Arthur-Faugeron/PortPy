@@ -1,4 +1,6 @@
-"""Portfolio weight validation and normalization."""
+"""
+Portfolio weight validation and normalization.
+"""
 
 from __future__ import annotations
 
@@ -7,7 +9,9 @@ import pandas as pd
 
 
 def equal_weights(names: list[str]) -> pd.Series:
-    """Build a 1/N weight vector for the given asset names."""
+    """
+    Build a 1/N weight vector for the given asset names.
+    """
     n = len(names)
     if n == 0:
         raise ValueError("Cannot build weights for zero assets.")
@@ -19,7 +23,8 @@ def normalize_weights(
     names: list[str] | None = None,
     allow_negative: bool = True,
 ) -> pd.Series:
-    """Validate a weights input and rescale it so it sums to 1.
+    """
+    Validate a weights input and rescale it so it sums to 1.
 
     Args:
         weights: A Series/dict keyed by asset name, or a plain array/list aligned

@@ -47,11 +47,12 @@ htmlcov/
 
 # Personal working notes
 /planning.md
+/debug.ipynb
 
 # Example outputs
 examples/output/
 
-# IDE / Editor
+# IDE, Editor
 .vscode/
 .idea/
 *.swp

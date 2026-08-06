@@ -1,6 +1,7 @@
-"""Risk-adjusted performance ratios.
+"""
+Risk-adjusted performance ratios.
 
-As in the rest of PortPy, `rf`/`mar`/`threshold` parameters are **annual** rates,
+As in the rest of PortPy, rf/mar/threshold parameters are annual rates,
 de-annualized internally via geometric compounding.
 """
 
@@ -10,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from portpy.explain import Explanation, MetricResult, register
+from portpy.metrics.drawdowns import max_drawdown
 from portpy.metrics.returns import annualized_return, prices_from_returns
 from portpy.metrics.risk import downside_deviation, volatility
 from portpy.utils.constants import DEFAULT_MAR, DEFAULT_RISK_FREE_RATE, TRADING_DAYS_PER_YEAR
@@ -38,7 +40,10 @@ def sharpe_ratio(
     periods_per_year: int = TRADING_DAYS_PER_YEAR,
     as_result: bool = False,
 ) -> float | MetricResult:
-    """Mean excess return over its own standard deviation - the classic risk-adjusted return."""
+    """
+    Mean excess return over its own standard deviation. Classic risk-adjusted return.
+    """
+
     r = returns.dropna()
     ensure_min_observations(r, 2, "returns")
     rf_period = periodic_rate_from_annual(rf, periods_per_year)
@@ -56,7 +61,10 @@ def sortino_ratio(
     periods_per_year: int = TRADING_DAYS_PER_YEAR,
     as_result: bool = False,
 ) -> float | MetricResult:
-    """Like Sharpe, but only penalizes downside deviation below `mar`, not total volatility."""
+    """
+    Like Sharpe, but only penalizes downside deviation below mar, not total volatility.
+    """
+
     r = returns.dropna()
     ensure_min_observations(r, 2, "returns")
     mar_period = periodic_rate_from_annual(mar, periods_per_year)
@@ -72,8 +80,10 @@ def calmar_ratio(
     periods_per_year: int = TRADING_DAYS_PER_YEAR,
     as_result: bool = False,
 ) -> float | MetricResult:
-    """Annualized return divided by the absolute worst drawdown - reward per unit of worst-case pain."""
-    from portpy.metrics.drawdowns import max_drawdown
+    """
+    Annualized return divided by the absolute worst drawdown
+    Reward per unit of worst-case pain.
+    """
 
     r = returns.dropna()
     ensure_min_observations(r, 2, "returns")
@@ -90,7 +100,10 @@ def omega_ratio(
     periods_per_year: int = TRADING_DAYS_PER_YEAR,
     as_result: bool = False,
 ) -> float | MetricResult:
-    """Ratio of the probability-weighted sum of gains to losses above/below a threshold."""
+    """
+    Ratio of the probability-weighted sum of gains to losses above/below a threshold.
+    """
+
     r = returns.dropna()
     ensure_min_observations(r, 2, "returns")
     if threshold <= -1:
@@ -110,7 +123,11 @@ def information_ratio(
     periods_per_year: int = TRADING_DAYS_PER_YEAR,
     as_result: bool = False,
 ) -> float | MetricResult:
-    """Active return over tracking error - how consistently a strategy beats its benchmark."""
+    """
+    Active return over tracking error
+    How consistently a strategy beats its benchmark.
+    """
+
     r, b = align_pair(returns, benchmark)
     ensure_min_observations(r, 2, "returns")
     diff = r - b
@@ -128,12 +145,15 @@ def treynor_ratio(
     periods_per_year: int = TRADING_DAYS_PER_YEAR,
     as_result: bool = False,
 ) -> float | MetricResult:
-    """Excess return per unit of *systematic* (beta) risk, rather than per unit of total volatility.
+    """
+    Excess return per unit of systematic (beta) risk, rather than per unit of total volatility.
 
     Args:
-        beta: Pre-computed beta of `returns` against the relevant benchmark - see
-            :func:`portpy.metrics.risk.beta`.
+        beta: Pre-computed beta of returns against the relevant benchmark
+        See
+            portpy.metrics.risk.beta.
     """
+
     r = returns.dropna()
     ensure_min_observations(r, 2, "returns")
     rf_period = periodic_rate_from_annual(rf, periods_per_year)
@@ -151,11 +171,13 @@ def m2_measure(
     periods_per_year: int = TRADING_DAYS_PER_YEAR,
     as_result: bool = False,
 ) -> float | MetricResult:
-    """Modigliani risk-adjusted performance: the return the portfolio *would* have earned levered/delevered to the benchmark's volatility.
+    """
+    Modigliani risk-adjusted performance: the return the portfolio would have earned levered/delevered to the benchmark's volatility.
 
     Expressed in the same units as an annual return, so it's directly comparable
-    to the benchmark's own annualized return - unlike Sharpe, which is unitless.
+    to the benchmark's own annualized return, unlike Sharpe, which is unitless.
     """
+
     r, b = align_pair(returns, benchmark)
     ensure_min_observations(r, 2, "returns")
     sharpe_p = sharpe_ratio(r, rf=rf, annualized=True, periods_per_year=periods_per_year)
@@ -170,12 +192,14 @@ def sterling_ratio(
     periods_per_year: int = TRADING_DAYS_PER_YEAR,
     as_result: bool = False,
 ) -> float | MetricResult:
-    """Annualized return divided by the average magnitude of the `n` worst drawdowns.
+    """
+    Annualized return divided by the average magnitude of the n worst drawdowns.
 
     This implementation uses a simplified, widely-used variant (average of the
-    `n` largest historical drawdowns) rather than the original definition's
+    n largest historical drawdowns) rather than the original definition's
     calendar-year drawdowns with a 10-point adjustment - see caveats.
     """
+
     from portpy.metrics.drawdowns import top_n_drawdowns
 
     r = returns.dropna()
@@ -197,12 +221,14 @@ def burke_ratio(
     periods_per_year: int = TRADING_DAYS_PER_YEAR,
     as_result: bool = False,
 ) -> float | MetricResult:
-    """Excess annualized return over the root-sum-square of the `n` worst drawdowns.
+    """
+    Excess annualized return over the root-sum-square of the n worst drawdowns.
 
-    Similar in spirit to :func:`sterling_ratio`, but squares the drawdowns before
-    combining them, so it penalizes a single very deep drawdown more than several
+    Similar in spirit to sterling_ratio, but squares the drawdowns before combining
+    them, so it penalizes a single very deep drawdown more than several
     moderate ones of the same total size.
     """
+
     from portpy.metrics.drawdowns import top_n_drawdowns
 
     r = returns.dropna()
@@ -218,7 +244,10 @@ def burke_ratio(
 
 
 def gain_to_pain_ratio(returns: pd.Series, as_result: bool = False) -> float | MetricResult:
-    """Sum of all returns divided by the sum of absolute losses - a Schwager favorite for its simplicity."""
+    """
+    Sum of all returns divided by the sum of absolute losses..
+    """
+
     r = returns.dropna()
     ensure_min_observations(r, 1, "returns")
     losses = float(-r[r < 0].sum())
@@ -232,11 +261,13 @@ def kappa_three_ratio(
     periods_per_year: int = TRADING_DAYS_PER_YEAR,
     as_result: bool = False,
 ) -> float | MetricResult:
-    """Like Sortino, but penalizes shortfalls below `mar` using a third-order (cubed) lower partial moment.
+    """
+    Like Sortino, but penalizes shortfalls using a third-order (cubed) lower partial moment.
 
     More sensitive to a handful of severe shortfalls than Sortino's second-order
     (squared) penalty.
     """
+
     r = returns.dropna()
     ensure_min_observations(r, 2, "returns")
     mar_period = periodic_rate_from_annual(mar, periods_per_year)
@@ -253,7 +284,10 @@ def upside_potential_ratio(
     periods_per_year: int = TRADING_DAYS_PER_YEAR,
     as_result: bool = False,
 ) -> float | MetricResult:
-    """Average upside above `mar` divided by downside deviation below `mar` - rewards asymmetric upside."""
+    """
+    Average upside above mar divided by downside deviation below mar, rewards asymmetric upside.
+    """
+
     r = returns.dropna()
     ensure_min_observations(r, 2, "returns")
     mar_period = periodic_rate_from_annual(mar, periods_per_year)
@@ -267,21 +301,17 @@ register(
     Explanation(
         name="sharpe_ratio",
         category="metric",
-        summary="The most widely used risk-adjusted return measure: excess return earned per unit of total volatility taken on.",
+        summary="Measures excess return earned per unit of total volatility taken, using the risk-free rate as the return hurdle.",
         formula="mean(r - rf) / std(r - rf, ddof=1) * sqrt(periods_per_year)",
-        how_to_read="A Sharpe of 1.0 means you earned, on average, one standard deviation of excess return for the volatility you took on.",
-        good_vs_bad="Rules of thumb: <0 poor (lost money net of the risk-free rate), 0-1 sub-par, 1-2 good, 2-3 very good, >3 excellent (and worth double-checking for overfitting or a very short sample).",
-        caveats=(
-            "Assumes returns are roughly symmetric - it penalizes upside volatility just as much as "
-            "downside, and can be misleadingly high for strategies with rare, large negative tail "
-            "events (e.g. option-selling). Pair with sortino_ratio and max_drawdown."
-        ),
+        how_to_read="A Sharpe of 1.0 means the strategy generated approximately one unit of excess return for each unit of volatility. Higher values indicate better risk-adjusted performance.",
+        good_vs_bad="Higher is generally better. Values above 1 are commonly considered strong, but interpretation depends on the asset class, time period, and strategy complexity.",
+        caveats="Sharpe treats all volatility as bad, including upside volatility. It can also overstate strategies with asymmetric downside risk, illiquidity, or short backtests.",
         interpret=lambda v: (
-            "poor (losing to the risk-free rate)" if v < 0
-            else "sub-par" if v < 1
+            "poor (negative excess return)" if v < 0
+            else "acceptable" if v < 1
             else "good" if v < 2
             else "very good" if v < 3
-            else "excellent (sanity-check for overfitting/short sample)"
+            else "excellent (verify robustness)"
         ),
     )
 )
@@ -290,12 +320,13 @@ register(
     Explanation(
         name="sortino_ratio",
         category="metric",
-        summary="Sharpe's more forgiving cousin: only volatility *below* a minimum acceptable return counts against the strategy.",
+        summary="Measures excess return relative to downside risk only, ignoring upside volatility.",
         formula="mean(r - mar) / downside_deviation(r, mar) * sqrt(periods_per_year)",
-        how_to_read="Will always be >= Sharpe for the same series (since the denominator only counts bad volatility). A big gap between Sortino and Sharpe means the strategy's volatility is mostly on the upside.",
-        good_vs_bad="Same rough scale as Sharpe (>1 good, >2 very good), but not directly comparable across strategies with different MAR choices.",
+        how_to_read="Higher values indicate that returns are being achieved with less harmful downside variation. Compare only when MAR assumptions are consistent.",
+        good_vs_bad="Higher is generally better. A large gap between Sortino and Sharpe suggests that volatility is mostly coming from positive returns rather than losses.",
+        caveats="Sensitive to the chosen MAR. Different MAR assumptions can produce significantly different results.",
         interpret=lambda v: (
-            "poor" if v < 0 else "sub-par" if v < 1 else "good" if v < 2 else "very good" if v < 3 else "excellent"
+            "poor" if v < 0 else "acceptable" if v < 1 else "good" if v < 2 else "very good" if v < 3 else "excellent"
         ),
     )
 )
@@ -304,11 +335,11 @@ register(
     Explanation(
         name="calmar_ratio",
         category="metric",
-        summary="Annualized return relative to the single worst drawdown ever experienced - a 'worst case reward-to-pain' ratio.",
+        summary="Measures annualized return relative to the portfolio's largest historical drawdown.",
         formula="annualized_return / abs(max_drawdown)",
-        how_to_read="A Calmar of 2.0 means the strategy earns roughly 2x its worst-ever peak-to-trough loss, per year.",
-        good_vs_bad="Rules of thumb: <1 weak (the worst drawdown roughly erased a year's gains), 1-3 solid, >3 excellent (very fast recovery relative to drawdown depth).",
-        caveats="Extremely sensitive to a single historical event - a short backtest without a real crash may show a great Calmar that won't survive the next one.",
+        how_to_read="A Calmar of 2 means the annualized return is roughly twice the size of the worst observed drawdown.",
+        good_vs_bad="Higher values indicate more return generated relative to worst historical loss. Values above 3 are generally considered strong, but depend on the sample period.",
+        caveats="Highly dependent on the worst historical event in the sample. Short histories may underestimate future drawdown risk.",
         interpret=lambda v: "weak" if v < 1 else "solid" if v < 3 else "excellent",
     )
 )
@@ -317,11 +348,12 @@ register(
     Explanation(
         name="omega_ratio",
         category="metric",
-        summary="Ratio of total gains to total losses relative to a threshold, using the *entire* return distribution rather than just its mean and variance.",
-        formula="sum(gains above threshold) / sum(|losses below threshold|)",
-        how_to_read="Omega of 1.0 means gains and losses around the threshold exactly balance. Above 1.0 favors the strategy.",
-        good_vs_bad="Higher is better; unlike Sharpe/Sortino it captures skewness and fat tails directly since it uses the full distribution, not just mean/variance.",
-        interpret=lambda v: f"{v:.2f}" + (" (losses dominate around the threshold)" if v < 1 else " (gains dominate around the threshold)"),
+        summary="Compares the probability-weighted magnitude of gains and losses relative to a chosen return threshold.",
+        formula="sum(gains above threshold) / sum(abs(losses below threshold))",
+        how_to_read="A value above 1 means gains above the threshold outweigh losses below it. A value below 1 means losses dominate.",
+        good_vs_bad="Higher is better because it captures the full return distribution rather than only mean and volatility.",
+        caveats="Highly dependent on the selected threshold. Results can change substantially when the target return changes.",
+        interpret=lambda v: f"{v:.2f}" + (" (losses dominate)" if v < 1 else " (gains dominate)"),
     )
 )
 
@@ -329,11 +361,12 @@ register(
     Explanation(
         name="information_ratio",
         category="metric",
-        summary="Active return over a benchmark, scaled by how consistent (low tracking error) that outperformance is.",
+        summary="Measures active return generated over a benchmark relative to the consistency of that outperformance.",
         formula="mean(returns - benchmark) / std(returns - benchmark, ddof=1) * sqrt(periods_per_year)",
-        how_to_read="An IR of 0.5 is considered decent for active management; 1.0+ is very good and rare to sustain.",
-        good_vs_bad="Higher is better - it rewards *consistent* outperformance, not just occasional lucky big wins.",
-        interpret=lambda v: "underperforming/inconsistent" if v < 0 else "modest" if v < 0.5 else "good" if v < 1 else "excellent (rare to sustain)",
+        how_to_read="Higher values indicate more consistent benchmark outperformance. A value near zero means active returns are not reliably different from the benchmark.",
+        good_vs_bad="Higher is better. Sustained values above 1 are uncommon and indicate strong active management consistency.",
+        caveats="Depends heavily on benchmark selection. A poor benchmark can make the ratio misleading.",
+        interpret=lambda v: "negative active performance" if v < 0 else "weak" if v < 0.5 else "good" if v < 1 else "excellent",
     )
 )
 
@@ -341,12 +374,12 @@ register(
     Explanation(
         name="treynor_ratio",
         category="metric",
-        summary="Excess return per unit of market (systematic/beta) risk, instead of per unit of total volatility like Sharpe.",
+        summary="Measures excess return earned per unit of systematic market risk measured by beta.",
         formula="mean(r - rf) / beta * periods_per_year",
-        how_to_read="Only meaningful when comparing portfolios that share a similar, well-diversified benchmark exposure - beta ignores idiosyncratic risk entirely.",
-        good_vs_bad="Higher is better; a low or negative beta near zero makes this ratio unstable/uninformative, so check beta's magnitude first.",
-        caveats="Garbage in, garbage out: the ratio is only as good as the beta estimate you feed it.",
-        interpret=lambda v: f"{v:+.3f} excess return per unit of beta",
+        how_to_read="Higher values indicate more return generated for each unit of market exposure. It is mainly useful when comparing diversified portfolios with similar benchmarks.",
+        good_vs_bad="Higher is better, but only meaningful when beta is stable and accurately estimated.",
+        caveats="Ignores idiosyncratic risk. Results become unstable when beta is close to zero or changes significantly over time.",
+        interpret=lambda v: f"{v:+.3f} excess return per beta unit",
     )
 )
 
@@ -354,11 +387,12 @@ register(
     Explanation(
         name="m2_measure",
         category="metric",
-        summary="Modigliani-Modigliani (M2): re-expresses Sharpe ratio as an annualized return, by imagining the portfolio levered/delevered to match the benchmark's volatility.",
+        summary="Converts Sharpe ratio into a return percentage by adjusting the portfolio to the benchmark volatility level.",
         formula="rf + sharpe_ratio(returns) * volatility(benchmark)",
-        how_to_read="Directly comparable to the benchmark's own annualized return - e.g. an M2 of 12% vs. a benchmark return of 9% means the portfolio would have beaten the benchmark by 3 points/year at matched risk.",
-        good_vs_bad="Higher than the benchmark's own return is good - it means better risk-adjusted performance, expressed in return terms rather than an abstract ratio.",
-        interpret=lambda v: f"{v:+.1%}/yr risk-matched return",
+        how_to_read="Can be compared directly with benchmark returns. A higher M2 indicates better risk-adjusted performance after matching volatility.",
+        good_vs_bad="Higher than the benchmark return indicates superior risk-adjusted performance.",
+        caveats="Assumes volatility is the relevant risk measure and depends on the benchmark used for comparison.",
+        interpret=lambda v: f"{v:+.1%}/yr risk-adjusted return",
     )
 )
 
@@ -366,11 +400,11 @@ register(
     Explanation(
         name="sterling_ratio",
         category="metric",
-        summary="Annualized return relative to the average size of the worst few drawdowns, rather than just the single worst one (Calmar).",
-        formula="annualized_return / mean(|n worst drawdowns|)",
-        how_to_read="Smooths out Calmar's sensitivity to one single event by averaging several bad episodes.",
-        good_vs_bad="Higher is better; same rough scale as Calmar.",
-        caveats="This package uses a simplified variant (average of the n largest historical drawdowns); some sources define Sterling using calendar-year drawdowns with a fixed 10-point adjustment instead.",
+        summary="Measures annualized return relative to the average magnitude of the largest historical drawdowns.",
+        formula="annualized_return / mean(abs(n worst drawdowns))",
+        how_to_read="Higher values indicate more return generated relative to repeated severe drawdown events.",
+        good_vs_bad="Higher is better. It is less dominated by a single worst event than Calmar ratio.",
+        caveats="This implementation uses average historical drawdowns. Some definitions of Sterling ratio use different drawdown adjustments.",
         interpret=lambda v: f"{v:.2f}",
     )
 )
@@ -379,10 +413,11 @@ register(
     Explanation(
         name="burke_ratio",
         category="metric",
-        summary="Like Sterling, but combines the worst drawdowns via root-sum-of-squares instead of a plain average, penalizing one severe drawdown more than several mild ones.",
+        summary="Measures excess return relative to the combined impact of the largest drawdowns, giving more weight to extreme losses.",
         formula="(annualized_return - rf) / sqrt(sum(worst_drawdowns^2))",
-        how_to_read="Lower than Sterling for the same data if the worst drawdown is much bigger than the others (squaring emphasizes it).",
-        good_vs_bad="Higher is better.",
+        how_to_read="Higher values indicate stronger return generation after accounting for severe drawdown history.",
+        good_vs_bad="Higher is better. Lower values indicate that drawdown severity consumes more of the portfolio's return.",
+        caveats="Sensitive to the selected number of drawdowns included and the historical sample.",
         interpret=lambda v: f"{v:.2f}",
     )
 )
@@ -391,11 +426,12 @@ register(
     Explanation(
         name="gain_to_pain_ratio",
         category="metric",
-        summary="Jack Schwager's simplest 'is this worth it' ratio: total gains vs. total losses, no annualization or volatility involved.",
-        formula="sum(r) / sum(|r| for r < 0)",
-        how_to_read="A ratio of 1.0 means cumulative gains exactly offset cumulative losses (roughly breakeven journey, even if the endpoint is positive due to compounding).",
-        good_vs_bad="Schwager's own rule of thumb: above 1.5 is quite good for most strategies; below 0.5 suggests a rough ride for the return achieved.",
-        interpret=lambda v: "rough ride for the return achieved" if v < 0.5 else "acceptable" if v < 1.5 else "quite good",
+        summary="Compares cumulative gains against cumulative losses, focusing on the balance between positive and negative returns.",
+        formula="sum(positive returns) / sum(abs(negative returns))",
+        how_to_read="Values above 1 indicate that gains outweigh losses. Higher values indicate a more favorable return distribution.",
+        good_vs_bad="Higher is better, but it does not account for volatility, drawdown depth, or the path taken to achieve returns.",
+        caveats="Ignores compounding effects and timing of returns. Two strategies with the same ratio may have very different risk profiles.",
+        interpret=lambda v: "poor" if v < 0.5 else "acceptable" if v < 1.5 else "strong",
     )
 )
 
@@ -403,10 +439,11 @@ register(
     Explanation(
         name="kappa_three_ratio",
         category="metric",
-        summary="A generalization of Sortino that penalizes shortfalls below the MAR using a cubed (third-order) penalty instead of squared.",
-        formula="mean(r - mar) / (mean(max(mar - r, 0)^3))^(1/3)",
-        how_to_read="More sensitive than Sortino to a small number of severe shortfalls, less sensitive to many small ones.",
-        good_vs_bad="Higher is better; compare only across strategies measured with the same MAR.",
+        summary="Measures return relative to downside risk using a third-order penalty for returns below the minimum acceptable return.",
+        formula="mean(r - mar) / mean(max(mar - r, 0)^3)^(1/3)",
+        how_to_read="Higher values indicate better compensation for severe downside outcomes. It penalizes extreme losses more than Sortino ratio.",
+        good_vs_bad="Higher is better when comparing strategies using the same MAR assumption.",
+        caveats="More sensitive to extreme observations than Sortino, which can make it unstable with short samples.",
         interpret=lambda v: f"{v:.2f}",
     )
 )
@@ -415,10 +452,11 @@ register(
     Explanation(
         name="upside_potential_ratio",
         category="metric",
-        summary="Average upside above the MAR divided by downside risk below it - rewards strategies with a favorable up/down shape, not just a high average.",
+        summary="Measures average upside above the MAR relative to downside deviation below the MAR.",
         formula="mean(max(r - mar, 0)) / downside_deviation(r, mar)",
-        how_to_read="Higher values mean the strategy captures meaningfully more upside than the downside risk it takes on.",
-        good_vs_bad="Higher is better; typically read alongside Sortino since they share the same downside-deviation denominator.",
+        how_to_read="Higher values indicate that upside potential is large relative to downside risk.",
+        good_vs_bad="Higher is better, especially for strategies targeting asymmetric return profiles.",
+        caveats="Depends on MAR selection and does not measure drawdown behavior directly.",
         interpret=lambda v: f"{v:.2f}",
     )
 )

@@ -47,7 +47,8 @@ LOOKBACK_DAYS = 3 * 365  # 3-year historical lookback window
 
 
 def fetch_alpaca_bars(client, request_cls, symbols: list[str], **client_kwargs) -> pd.DataFrame:
-    """Fetch daily close prices for symbols from an Alpaca historical data client.
+    """
+    Fetch daily close prices for symbols from an Alpaca historical data client.
 
     Alpaca returns a (symbol, timestamp) MultiIndex with tz-aware UTC
     timestamps - this reshapes it into the wide, tz-naive, one-column-per-asset

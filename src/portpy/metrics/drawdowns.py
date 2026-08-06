@@ -1,7 +1,8 @@
-"""Drawdown analysis: depth, duration, recovery, and tail risk of peak-to-trough declines.
+"""
+Drawdown analysis: depth, duration, recovery, and tail risk of peak-to-trough declines.
 
-All functions here take a **price** series (or any cumulative-value series, e.g.
-a synthetic index built from `(1 + returns).cumprod()`) - not a returns series.
+All functions here take a price series (or any cumulative-value series, e.g.
+a synthetic index built from (1 + returns).cumprod()) - not a returns series.
 """
 
 from __future__ import annotations
@@ -25,7 +26,9 @@ __all__ = [
 
 
 def drawdown_series(prices: pd.Series) -> pd.Series:
-    """Percentage decline from the running peak at every point in time (always <= 0)."""
+    """
+    Percentage decline from the running peak at every point in time (always <= 0).
+    """
     p = prices.dropna()
     running_max = p.cummax()
     dd = p / running_max - 1.0
@@ -33,7 +36,9 @@ def drawdown_series(prices: pd.Series) -> pd.Series:
 
 
 def _drawdown_episodes(prices: pd.Series) -> pd.DataFrame:
-    """Identify each distinct peak -> trough -> (recovery|ongoing) episode."""
+    """
+    Identify each distinct peak -> trough -> (recovery|ongoing) episode.
+    """
     p = prices.dropna()
     dd = drawdown_series(p)
     underwater = dd < 0
@@ -71,7 +76,9 @@ def _drawdown_episodes(prices: pd.Series) -> pd.DataFrame:
 
 
 def max_drawdown(prices: pd.Series, as_result: bool = False) -> float | MetricResult:
-    """The single deepest peak-to-trough decline (a negative number, or 0.0 if the series never fell)."""
+    """
+    The single deepest peak-to-trough decline (a negative number, or 0.0 if the series never fell).
+    """
     p = prices.dropna()
     ensure_min_observations(p, 1, "prices")
     value = float(drawdown_series(p).min())
@@ -79,7 +86,9 @@ def max_drawdown(prices: pd.Series, as_result: bool = False) -> float | MetricRe
 
 
 def drawdown_duration(prices: pd.Series) -> pd.Series:
-    """At every point in time, how many periods have passed since the last new high."""
+    """
+    At every point in time, how many periods have passed since the last new high.
+    """
     p = prices.dropna()
     n = len(p)
     positions = np.arange(n)
@@ -92,7 +101,9 @@ def drawdown_duration(prices: pd.Series) -> pd.Series:
 
 
 def top_n_drawdowns(prices: pd.Series, n: int = 5) -> pd.DataFrame:
-    """The `n` deepest drawdown episodes, sorted worst-first, with start/trough/end/depth/duration."""
+    """
+    The n deepest drawdown episodes, sorted worst-first, with start/trough/end/depth/duration.
+    """
     p = prices.dropna()
     ensure_min_observations(p, 2, "prices")
     episodes = _drawdown_episodes(p)
@@ -102,7 +113,9 @@ def top_n_drawdowns(prices: pd.Series, n: int = 5) -> pd.DataFrame:
 
 
 def time_to_recovery(prices: pd.Series) -> float | None:
-    """Periods it took to recover from the single worst drawdown, or None if it hasn't recovered yet."""
+    """
+    Periods it took to recover from the single worst drawdown, or None if it hasn't recovered yet.
+    """
     p = prices.dropna()
     episodes = _drawdown_episodes(p)
     if episodes.empty:
@@ -112,7 +125,9 @@ def time_to_recovery(prices: pd.Series) -> float | None:
 
 
 def average_drawdown(prices: pd.Series, as_result: bool = False) -> float | MetricResult:
-    """Mean depth across all distinct drawdown episodes (not a continuous time-average - see pain_index for that)."""
+    """
+    Mean depth across all distinct drawdown episodes (not a continuous time-average see pain_index for that).
+    """
     p = prices.dropna()
     episodes = _drawdown_episodes(p)
     value = float(episodes["depth"].mean()) if not episodes.empty else 0.0
@@ -124,7 +139,9 @@ def drawdown_at_risk(
     confidence: float = DEFAULT_CONFIDENCE_LEVEL,
     as_result: bool = False,
 ) -> float | MetricResult:
-    """VaR applied to the drawdown series: the drawdown level breached only `1 - confidence` of the time."""
+    """
+    VaR applied to the drawdown series: the drawdown level breached only 1. Confidence of the time.
+    """
     validate_confidence(confidence)
     p = prices.dropna()
     ensure_min_observations(p, 2, "prices")
@@ -137,10 +154,12 @@ register(
     Explanation(
         name="drawdown_series",
         category="metric",
-        summary="The running percentage decline from the highest value seen so far, at every point in time.",
-        formula="price_t / max(price_0..t) - 1",
-        how_to_read="Always <= 0. A drawdown chart that spends most of its time near 0 and dips briefly is healthier than one that lingers deeply negative.",
-        good_vs_bad="Shallower and shorter dips are better. Use top_n_drawdowns and drawdown_duration to see individual episodes rather than reading the raw series alone.",
+        summary="The percentage decline of a portfolio value from its highest previous level at each point in time.",
+        formula="current_value / running_max_value - 1",
+        how_to_read="Values are always zero or negative. A value of -0.20 means the portfolio is 20% below its previous peak.",
+        good_vs_bad="Smaller and shorter drawdowns indicate better capital preservation. The series is best analyzed together with drawdown duration and recovery metrics.",
+        caveats="Drawdown measures losses from previous peaks but does not show the path taken, volatility before the decline, or recovery speed.",
+        interpret=lambda v: f"{v:.2%} below previous peak",
     )
 )
 
@@ -148,13 +167,13 @@ register(
     Explanation(
         name="max_drawdown",
         category="metric",
-        summary="The single worst peak-to-trough loss the portfolio ever experienced.",
-        formula="min(drawdown_series)",
-        how_to_read="Reported as a negative percentage: -0.30 means the portfolio was, at its worst point, 30% below its prior peak.",
-        good_vs_bad="Rules of thumb: shallower than -10% very mild, -10% to -25% typical for equities, worse than -40% severe (comparable to major bear markets) - context (asset class, leverage) matters a lot.",
-        caveats="A single number - it tells you nothing about how long the drawdown lasted or whether it recovered. Pair with drawdown_duration and time_to_recovery.",
+        summary="The largest observed loss from a historical peak to the following lowest point before a recovery or the end of the sample.",
+        formula="minimum(drawdown_series)",
+        how_to_read="Reported as a negative percentage. A value of -0.30 means the portfolio lost 30% from its previous peak at its worst point.",
+        good_vs_bad="A smaller absolute drawdown is generally preferable because large losses require disproportionately larger gains to recover.",
+        caveats="Max drawdown only captures the worst event. It does not measure frequency, duration, or how quickly losses were recovered.",
         interpret=lambda v: (
-            "mild" if v > -0.10 else "typical for a risky asset" if v > -0.25 else "severe" if v > -0.40 else "extreme"
+            "mild" if v > -0.10 else "moderate" if v > -0.25 else "severe" if v > -0.40 else "extreme"
         ),
     )
 )
@@ -163,9 +182,12 @@ register(
     Explanation(
         name="drawdown_duration",
         category="metric",
-        summary="A running counter of how many periods have elapsed since the portfolio last hit a new high.",
-        how_to_read="Rises steadily while underwater and resets to 0 the instant a new high is made. Long stretches of high values mean the portfolio spent a long time recovering, even if the drawdown itself wasn't very deep.",
-        good_vs_bad="Shorter is better - a portfolio that's frequently at new highs (duration resets often) is more comfortable to hold even at similar drawdown depth.",
+        summary="Tracks how long the portfolio has remained below its previous high after entering a drawdown period.",
+        formula="current_period - last_peak_period",
+        how_to_read="Higher values indicate longer recovery periods. The value resets when a new portfolio high is reached.",
+        good_vs_bad="Shorter drawdown durations are generally preferable because investors recover losses faster.",
+        caveats="Duration does not measure the size of the loss. A portfolio can have a long shallow drawdown or a short severe drawdown.",
+        interpret=lambda v: f"{v:.0f} periods since previous high",
     )
 )
 
@@ -173,10 +195,12 @@ register(
     Explanation(
         name="time_to_recovery",
         category="metric",
-        summary="How many periods it took the portfolio to climb back to its prior peak after the single worst drawdown.",
-        how_to_read="Expressed in the same frequency as your data (e.g. trading days). None means the portfolio never recovered by the end of the sample.",
-        good_vs_bad="Shorter is better. `None` is a serious red flag if the sample is recent - it means the worst drawdown is still open.",
-        interpret=lambda v: "still underwater as of the end of the sample" if v is None else f"{v:.0f} periods to recover",
+        summary="Measures the number of periods required for the portfolio to recover from its largest drawdown back to its previous peak.",
+        formula="recovery_date - drawdown_start_date",
+        how_to_read="The value represents recovery time in the same frequency as the input data. None means the portfolio has not recovered by the end of the sample.",
+        good_vs_bad="Shorter recovery periods indicate faster capital recovery. Long unrecovered periods increase investor risk and behavioral pressure.",
+        caveats="Recovery time depends on the observation period. A recent unresolved drawdown may appear worse simply because insufficient recovery time has passed.",
+        interpret=lambda v: "not recovered" if v is None else f"{v:.0f} periods to recover",
     )
 )
 
@@ -184,9 +208,11 @@ register(
     Explanation(
         name="top_n_drawdowns",
         category="metric",
-        summary="A table of the worst individual drawdown episodes, each with its start, trough, end (if recovered), depth, and duration.",
-        how_to_read="Sorted worst-first by depth. `recovered=False` rows are still open as of the last observation.",
-        good_vs_bad="Fewer, shallower, faster-recovering episodes are better. Watch especially for unrecovered episodes near the end of the sample.",
+        summary="A ranked table of the largest drawdown episodes, including their timing, depth, and recovery characteristics.",
+        formula="sort(drawdown_episodes, by=depth)",
+        how_to_read="The table identifies the worst historical loss periods and whether each drawdown eventually recovered.",
+        good_vs_bad="Fewer severe drawdowns and faster recoveries generally indicate stronger downside resilience.",
+        caveats="Historical drawdown episodes may not represent future losses, especially when market conditions change.",
     )
 )
 
@@ -194,12 +220,12 @@ register(
     Explanation(
         name="average_drawdown",
         category="metric",
-        summary="The mean depth across every distinct drawdown episode (peak-to-trough dip), treating each episode once regardless of how long it lasted.",
-        formula="mean(depth of each drawdown episode)",
-        how_to_read="A milder number than max_drawdown by construction - it answers 'how bad is a *typical* drawdown', not 'how bad was the worst one'.",
-        good_vs_bad="Closer to zero is better. Compare to max_drawdown: a small gap means drawdowns are fairly uniform in severity; a big gap means one outlier event dominates.",
-        caveats="Different from pain_index, which time-averages the drawdown series continuously (so it also reflects how long each episode lasted, not just its depth).",
-        interpret=lambda v: f"{v:.2%} typical episode depth",
+        summary="The average depth of completed drawdown episodes, showing the typical size of portfolio declines.",
+        formula="mean(drawdown_episode_depths)",
+        how_to_read="A value of -0.05 means the average drawdown episode reduced portfolio value by approximately 5%.",
+        good_vs_bad="Values closer to zero indicate smaller typical losses. Compare with max_drawdown to identify whether risk is dominated by rare extreme events.",
+        caveats="Average drawdown ignores how long each episode lasts. A portfolio can have small but very persistent drawdowns.",
+        interpret=lambda v: f"{v:.2%} average drawdown depth",
     )
 )
 
@@ -207,10 +233,11 @@ register(
     Explanation(
         name="drawdown_at_risk",
         category="metric",
-        summary="Value-at-Risk applied to drawdown depth instead of returns: the drawdown level only breached `1 - confidence` of the time.",
-        formula="percentile(drawdown_series, 100*(1-confidence))",
-        how_to_read="A 95% drawdown-at-risk of -0.18 means the portfolio was deeper than 18% underwater only 5% of the time in this sample.",
-        good_vs_bad="Closer to zero is better/safer.",
-        interpret=lambda v: f"{v:.1%}",
+        summary="A downside risk measure applying a percentile calculation to historical drawdown levels instead of returns.",
+        formula="percentile(drawdown_series, 100 * (1 - confidence))",
+        how_to_read="A value of -0.20 at 95% confidence means drawdowns exceeded 20% only during the worst 5% of observed periods.",
+        good_vs_bad="Values closer to zero indicate lower historical drawdown severity.",
+        caveats="Like other percentile-based risk measures, this depends on the historical sample and may underestimate future extreme events.",
+        interpret=lambda v: f"{v:.2%} drawdown threshold",
     )
 )

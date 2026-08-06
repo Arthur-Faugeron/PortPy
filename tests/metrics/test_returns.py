@@ -5,7 +5,6 @@ import pytest
 from portpy.explain import MetricResult
 from portpy.metrics import returns as m
 
-
 def test_simple_returns_matches_pct_change():
     prices = pd.Series([100.0, 110.0, 99.0], index=pd.bdate_range("2020-01-01", periods=3))
     r = m.simple_returns(prices)

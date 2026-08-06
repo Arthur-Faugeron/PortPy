@@ -1,4 +1,6 @@
-"""Core building blocks: asset tagging, weights, calendar alignment, currency conversion."""
+"""
+Core building blocks: asset tagging, weights, calendar alignment, currency conversion.
+"""
 
 from portpy.core.asset import ALWAYS_ON_CLASSES, AssetClass
 from portpy.core.calendar import align_calendars, calendar_coverage_report, detect_frequency

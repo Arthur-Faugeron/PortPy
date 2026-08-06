@@ -4,7 +4,6 @@ import pytest
 
 from portpy.metrics import risk as m
 
-
 def test_volatility_annualized_matches_manual(normal_returns):
     std = normal_returns.std(ddof=1)
     expected = std * np.sqrt(252)

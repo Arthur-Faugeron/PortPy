@@ -4,7 +4,6 @@ import pytest
 
 from portpy.metrics import benchmarks as m
 
-
 def test_correlation_of_series_with_itself_is_one(normal_returns):
     assert m.correlation(normal_returns, normal_returns) == pytest.approx(1.0)
 

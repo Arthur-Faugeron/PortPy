@@ -1,7 +1,7 @@
 # Calendars & Currencies
 
 PortPy never aligns or cleans your data for you. If you combine assets that trade on
-different schedules or in different currencies, `Portfolio` will happily accept the result —
+different schedules or in different currencies, `Portfolio` will happily accept the result,
 including any `NaN`s from a calendar mismatch — because silently reindexing or FX-converting
 financial data is exactly the kind of thing that should be a deliberate, visible step, not a
 side effect of a constructor.

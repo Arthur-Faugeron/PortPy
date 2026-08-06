@@ -1,4 +1,6 @@
-"""OLS regression helpers built on statsmodels - used for factor exposure and rolling beta analysis."""
+"""
+OLS regression helpers built on statsmodels used for factor exposure and rolling beta analysis.
+"""
 
 from __future__ import annotations
 
@@ -26,13 +28,17 @@ def _prepare_design(y: pd.Series, x: pd.Series | pd.DataFrame) -> tuple[pd.Serie
 
 
 def linear_regression(y: pd.Series, x: pd.Series | pd.DataFrame) -> RegressionResultsWrapper:
-    """Fit `y ~ const + x` via Ordinary Least Squares and return the full statsmodels result object."""
+    """
+    Fit y ~ const + x via Ordinary Least Squares and return the full statsmodels result object.
+    """
     y_aligned, design = _prepare_design(y, x)
     return sm.OLS(y_aligned, design).fit()
 
 
 def rolling_regression(y: pd.Series, x: pd.Series | pd.DataFrame, window: int) -> pd.DataFrame:
-    """Refit `y ~ const + x` on a trailing window at every point - a DataFrame of rolling coefficients."""
+    """
+    Refit y ~ const + x on a trailing window at every point, a DataFrame of rolling coefficients.
+    """
     y_aligned, design = _prepare_design(y, x)
     model = RollingOLS(y_aligned, design, window=window, min_nobs=window)
     res = model.fit()
@@ -40,7 +46,9 @@ def rolling_regression(y: pd.Series, x: pd.Series | pd.DataFrame, window: int) -
 
 
 def regression_summary(model: RegressionResultsWrapper) -> pd.DataFrame:
-    """Tidy summary table (coef, std err, t-stat, p-value, 95% CI) for a fitted `linear_regression` result."""
+    """
+    Tidy summary table (coef, std err, t-stat, p-value, 95% CI) for a fitted linear_regression result.
+    """
     conf = model.conf_int()
     conf.columns = ["conf_low", "conf_high"]
     summary = pd.DataFrame(
@@ -59,16 +67,35 @@ def regression_summary(model: RegressionResultsWrapper) -> pd.DataFrame:
 
 register(
     Explanation(
+        name="linear_regression",
+        category="function",
+        summary="Fits an OLS regression model of y on one or more explanatory variables using statsmodels.",
+        formula="y = beta_0 + beta_1 * x_1 + ... + beta_n * x_n + error",
+        how_to_read="Use this when you want a full fitted regression object for diagnostics, coefficient inspection, and further statistical analysis.",
+        good_vs_bad="A meaningful regression should have stable coefficients and reasonable explanatory power, but financial relationships can be unstable and do not imply causation.",
+    )
+)
+
+register(
+    Explanation(
+        name="rolling_regression",
+        category="function",
+        summary="Refits an OLS regression over a rolling window so you can inspect how coefficient estimates evolve through time.",
+        formula="same as linear_regression, but estimated on a trailing window",
+        how_to_read="Use this to see whether the relationship between variables changes over time, which is common in financial data.",
+        good_vs_bad="Stable coefficients over time are generally more reliable than coefficients that drift dramatically.",
+    )
+)
+
+register(
+    Explanation(
         name="regression_summary",
-        category="metric",
-        summary="A tidy table of an OLS regression's coefficients, significance, and confidence intervals - e.g. exposure to a benchmark or factor set.",
-        formula="coef +/- std_err, t = coef/std_err, p_value from a t-distribution, 95% CI = coef +/- 1.96*std_err (approx)",
-        how_to_read=(
-            "For a coefficient row: `coef` is the estimated sensitivity, `p_value` below 0.05 "
-            "conventionally means it's statistically distinguishable from zero. Check `r_squared` "
-            "(in `.attrs['r_squared']`) for how much variance the whole model explains."
-        ),
-        good_vs_bad="A significant (low p-value), stable-signed coefficient with a sensible economic interpretation is 'good' evidence of a real exposure - a high-p-value coefficient close to zero should be treated as noise.",
-        caveats="OLS assumes a linear, stable relationship and roughly well-behaved residuals - always sanity-check with a scatter plot, especially with financial return data's fat tails.",
+        category="function",
+        summary="A structured summary table of an OLS regression model containing coefficient estimates, uncertainty measures, statistical tests, and confidence intervals.",
+        formula="t_stat = coef / std_err; confidence_interval = coef +/- critical_value * std_err",
+        how_to_read=("Each row represents an explanatory variable. coef shows the estimated relationship between the predictor and target variable while controlling for other variables. std_err measures uncertainty around the estimate. t_stat and p_value indicate whether the relationship is statistically distinguishable from zero. The confidence interval shows the plausible range of the coefficient estimate. r_squared and adjusted_r_squared summarize how much variation in the dependent variable is explained by the model."),
+        good_vs_bad=("Useful regression results have coefficients that are statistically significant, economically meaningful, and stable across different samples. Large standard errors, unstable coefficients, or poor explanatory power indicate weaker model reliability."),
+        caveats=("Regression results show statistical relationships, not causation. OLS assumptions may not hold in financial data due to autocorrelation, heteroskedasticity, non-normal residuals, or changing market regimes."),
+        interpret=lambda v: "OLS regression coefficient summary table",
     )
 )

@@ -1,4 +1,6 @@
-"""Lightweight asset tagging, used only for reporting/grouping - never required."""
+"""
+Lightweight asset tagging, used only for reporting/grouping, but never required.
+"""
 
 from __future__ import annotations
 
@@ -6,7 +8,8 @@ from enum import Enum
 
 
 class AssetClass(str, Enum):
-    """Optional tag for an asset's broad class.
+    """
+    Optional tag for an asset's broad class.
 
     Passing these to :class:`~portpy.portfolio.Portfolio` (via ``asset_classes=``)
     is purely informational - it powers grouping in tearsheets and reminds you which
@@ -23,5 +26,7 @@ class AssetClass(str, Enum):
     OTHER = "other"
 
 
+"""
+Asset classes that typically trade 24/7 - useful when choosing a calendar-alignment method.
+"""
 ALWAYS_ON_CLASSES = frozenset({AssetClass.CRYPTO, AssetClass.FX})
-"""Asset classes that typically trade 24/7 - useful when choosing a calendar-alignment method."""

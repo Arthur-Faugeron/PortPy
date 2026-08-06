@@ -1,7 +1,8 @@
-"""The `Portfolio` class: PortPy's single entry point for analysis.
+"""
+The Portfolio class: PortPy's single entry point for analysis.
 
 Holds price data and weights, and exposes every function in
-:mod:`portpy.metrics` as a bound method under `.metrics`, automatically
+:mod:portpy.metrics as a bound method under .metrics`, automatically
 supplying the portfolio's own returns/prices/weights/risk-free rate as
 defaults wherever a metric function needs them.
 """
@@ -29,17 +30,19 @@ _INPUT_TYPES = ("prices", "returns")
 
 # Functions where the "returns" parameter means the full multi-asset DataFrame
 # (not the portfolio's own aggregated return series).
+
 _ASSET_LEVEL_RETURNS_FUNCS = frozenset({"covariance_matrix", "correlation_matrix"})
 
 
 class _MetricsNamespace:
-    """`portfolio.metrics.<name>(...)` - every function in `portpy.metrics`, bound to this portfolio.
+    """
+    portfolio.metrics.<name>(...) - every function in portpy.metrics, bound to this portfolio.
 
-    Any parameter named `returns`, `prices`, `y`, `weights`, or `cov_matrix` that
+    Any parameter named returns, prices, y, weights, or cov_matrix that
     the caller doesn't supply is filled in automatically from the parent
-    `Portfolio` (its own aggregated returns/price index/weights/covariance
-    matrix); `rf` and `periods_per_year` default to the portfolio's
-    `risk_free_rate` and `frequency`. Auto-fill is skipped entirely for any call
+    Portfolio (its own aggregated returns/price index/weights/covariance
+    matrix); rf and periods_per_year default to the portfolio's
+    risk_free_rate and frequency. Auto-fill is skipped entirely for any call
     made with positional arguments, to avoid ambiguous double-binding - use
     keyword arguments to benefit from the defaults.
     """
@@ -88,26 +91,27 @@ class _MetricsNamespace:
 
 
 class Portfolio:
-    """A collection of assets, their prices, and their weights - PortPy's main entry point.
+    """
+    A collection of assets, their prices, and their weights, PortPy's main entry point.
 
     Args:
         data: Columns = asset symbols, index = a sorted, duplicate-free
-            `DatetimeIndex`. See :func:`portpy.core.align_calendars` if you're
+            DatetimeIndex. See :func:portpy.core.align_calendars if you're
             combining assets with different trading calendars (e.g. crypto and
-            equities), and :func:`portpy.core.convert_to_base_currency` if your
+            equities), and :func:portpy.core.convert_to_base_currency if your
             assets aren't all in the same currency - both run *before*
-            constructing the `Portfolio`, which never modifies your data itself.
-        input_type: `"prices"` (default) or `"returns"` - what `data` contains.
+            constructing the Portfolio, which never modifies your data itself.
+        input_type: "prices" (default) or "returns" - what data contains.
         weights: Optional weights (Series/dict/array, any order); defaults to
-            equal-weight (1/N) across all columns in `data`.
+            equal-weight (1/N) across all columns in data.
         name: A label used in chart titles and comparisons.
         frequency: Trading periods per year, used to annualize metrics
             (default 252 for daily equity data; use 365 for a crypto-only,
             7-day-a-week portfolio, 12 for monthly data, etc.).
-        risk_free_rate: Annual risk-free rate, used as the default `rf` in
-            `.metrics` calls.
-        asset_classes: Optional `{symbol: AssetClass}` tags, purely for
-            reporting/grouping - see `portpy.core.AssetClass`.
+        risk_free_rate: Annual risk-free rate, used as the default rf in
+            .metrics calls.
+        asset_classes: Optional {symbol: AssetClass} tags, purely for
+            reporting/grouping - see portpy.core.AssetClass.
     """
 
     def __init__(
@@ -154,7 +158,9 @@ class Portfolio:
 
     @property
     def prices(self) -> pd.DataFrame:
-        """Asset price DataFrame (reconstructed from returns at construction time if needed)."""
+        """
+        Asset price DataFrame (reconstructed from returns at construction time if needed).
+        """
         return self._prices.copy()
 
     @property
@@ -170,11 +176,14 @@ class Portfolio:
         return self._weights.copy()
 
     def set_weights(self, weights: pd.Series | np.ndarray | dict) -> None:
-        """Validate, normalize (sum to 1), and apply new portfolio weights."""
+        """
+        Validate, normalize (sum to 1), and apply new portfolio weights.
+        """
         self._weights = normalize_weights(weights, names=self._asset_names)
 
     def set_risk_free_rate(self, rate: float) -> None:
-        """Set the annual risk-free rate used as the default `rf` in `.metrics` calls.
+        """
+        Set the annual risk-free rate used as the default rf in .metrics calls.
 
         A common choice is the annualized return of a cash-like proxy (e.g. a
         T-Bill ETF) over the same period as your analysis.
@@ -182,20 +191,23 @@ class Portfolio:
         self.risk_free_rate = float(rate)
 
     def asset_returns(self, log: bool = False) -> pd.DataFrame:
-        """Per-asset simple (or log) returns - the multi-asset DataFrame, not the portfolio aggregate."""
+        """
+        Per-asset simple (or log) returns - the multi-asset DataFrame, not the portfolio aggregate.
+        """
         return log_returns(self._prices) if log else simple_returns(self._prices)
 
     def returns(self, period: int = 1, log: bool = False) -> pd.Series:
-        """The portfolio's own return series: asset returns combined by current weights.
+        """
+        The portfolio's own return series: asset returns combined by current weights.
 
         Assumes weights are held constant each period (i.e. rebalanced back to
         target every period) - the standard simplifying assumption for a
-        buy-and-hold-with-fixed-weights analysis. For turnover/rebalancing
-        effects, see :mod:`portpy.strategies`.
+        buy and hold with fixed weights analysis. For turnover/rebalancing
+        effects, see :mod:portpy.strategies.
 
         Args:
             period: Compound returns over non-overlapping blocks of this many
-                periods (e.g. `period=21` on daily data for a rough monthly
+                periods (e.g. period=21 on daily data for a rough monthly
                 series) instead of period-over-period.
             log: Return log returns instead of simple returns.
         """
@@ -215,9 +227,10 @@ class Portfolio:
         return port_r.rename(self.name)
 
     def price_index(self, base: float = 100.0) -> pd.Series:
-        """Synthetic aggregated portfolio value, rebased to `base`, built by compounding `.returns()`.
+        """
+        Synthetic aggregated portfolio value, rebased to base, built by compounding .returns().
 
-        Anchored one period before the first return (see `prices_from_returns`), so
+        Anchored one period before the first return (see prices_from_returns), so
         a drawdown/CAGR computed on this index correctly reflects the very first
         period's move instead of silently treating it as the starting point.
         """

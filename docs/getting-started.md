@@ -3,16 +3,16 @@
 ## Install
 
 ```bash
-pip install portpy
+pip install portpy-quant
 ```
 
 Optional extras:
 
 ```bash
-pip install "portpy[viz]"      # plotly, matplotlib, seaborn (for future visualization work)
-pip install "portpy[models]"   # scikit-learn, arch, hmmlearn (for future models work)
-pip install "portpy[data]"     # yfinance, alpaca-py, python-dotenv (to run examples/)
-pip install "portpy[all]"      # everything above
+pip install "portpy-quant[viz]"      # plotly, matplotlib, seaborn (for future visualization work)
+pip install "portpy-quant[models]"   # scikit-learn, arch, hmmlearn (for future models work)
+pip install "portpy-quant[data]"     # yfinance, alpaca-py, python-dotenv (to run examples/)
+pip install "portpy-quant[all]"      # everything above
 ```
 
 Core dependencies (`numpy`, `pandas`, `scipy`, `statsmodels`) are always installed. PortPy
@@ -54,7 +54,7 @@ from portpy import Portfolio
 portfolio = Portfolio(
     prices,
     weights={"AAPL": 0.6, "MSFT": 0.4},     # optional - defaults to equal weight
-    name="Tech Portfolio",
+    name="Tech Portfolio",                  # optional - used in explanations and plots
     frequency=252,                          # trading periods/year, for annualization
     risk_free_rate=0.04,                    # annual rate, used as the default `rf`
 )

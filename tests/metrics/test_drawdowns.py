@@ -4,7 +4,6 @@ import pytest
 
 from portpy.metrics import drawdowns as m
 
-
 @pytest.fixture
 def v_shaped_prices():
     # Peak of 100, trough of 70 (-30%), recovers to 110, then a second smaller dip.
