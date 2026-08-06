@@ -4,6 +4,7 @@ import pytest
 
 from portpy.core.calendar import align_calendars, calendar_coverage_report, detect_frequency
 
+
 def test_detect_frequency_business_days():
     idx = pd.bdate_range("2020-01-01", periods=30)
     assert detect_frequency(idx) == "daily-5"

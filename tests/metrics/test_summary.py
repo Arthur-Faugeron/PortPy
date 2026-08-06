@@ -4,6 +4,7 @@ import pytest
 from portpy.explain import MetricResult
 from portpy.metrics import summary as m
 
+
 def test_tearsheet_summary_returns_metric_results(normal_returns, prices_from_normal):
     result = m.tearsheet_summary(normal_returns, prices=prices_from_normal)
     expected_keys = {

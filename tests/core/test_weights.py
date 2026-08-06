@@ -4,6 +4,7 @@ import pytest
 
 from portpy.core.weights import equal_weights, normalize_weights
 
+
 def test_equal_weights_sums_to_one():
     w = equal_weights(["A", "B", "C"])
     assert w.sum() == pytest.approx(1.0)

@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+
 @pytest.fixture
 def business_day_index():
     return pd.bdate_range("2020-01-01", periods=504)

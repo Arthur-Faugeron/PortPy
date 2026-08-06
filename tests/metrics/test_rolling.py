@@ -6,6 +6,7 @@ from portpy.metrics import rolling as m
 from portpy.metrics.performance import sharpe_ratio
 from portpy.metrics.risk import volatility
 
+
 def test_rolling_metric_matches_direct_call_on_window(normal_returns):
     window = 60
     rolled = m.rolling_metric(normal_returns, sharpe_ratio, window=window)

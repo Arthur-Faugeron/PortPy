@@ -4,6 +4,7 @@ import pytest
 
 from portpy.metrics import costs as m
 
+
 def test_turnover_from_weights_first_row_is_half_initial_weights():
     idx = pd.bdate_range("2020-01-01", periods=3)
     weights = pd.DataFrame({"A": [0.6, 0.6, 0.5], "B": [0.4, 0.4, 0.5]}, index=idx)

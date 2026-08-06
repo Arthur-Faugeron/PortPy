@@ -4,6 +4,7 @@ import pytest
 
 from portpy.metrics import distributions as m
 
+
 def test_describe_includes_skew_and_kurtosis(normal_returns):
     desc = m.describe(normal_returns)
     assert "skew" in desc.index
