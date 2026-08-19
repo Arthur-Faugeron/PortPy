@@ -165,19 +165,32 @@ class Portfolio:
 
     @property
     def asset_names(self) -> list[str]:
+        """
+        The portfolio's asset symbols, in column order.
+        """
         return list(self._asset_names)
 
     @property
     def num_assets(self) -> int:
+        """
+        The number of assets in the portfolio.
+        """
         return len(self._asset_names)
 
     @property
     def weights(self) -> pd.Series:
+        """
+        The current per-asset weights, indexed by asset name.
+        """
         return self._weights.copy()
 
     def set_weights(self, weights: pd.Series | np.ndarray | dict) -> None:
         """
         Validate, normalize (sum to 1), and apply new portfolio weights.
+
+        Args:
+            weights: A Series/dict keyed by asset name, or a plain array aligned
+                with `asset_names`.
         """
         self._weights = normalize_weights(weights, names=self._asset_names)
 
@@ -185,14 +198,20 @@ class Portfolio:
         """
         Set the annual risk-free rate used as the default rf in .metrics calls.
 
-        A common choice is the annualized return of a cash-like proxy (e.g. a
-        T-Bill ETF) over the same period as your analysis.
+        Args:
+            rate: The new annual risk-free rate (e.g. 0.04 for 4%/year).
         """
         self.risk_free_rate = float(rate)
 
     def asset_returns(self, log: bool = False) -> pd.DataFrame:
         """
         Per-asset simple (or log) returns - the multi-asset DataFrame, not the portfolio aggregate.
+
+        Args:
+            log: If True, return log returns instead of simple returns.
+
+        Returns:
+            A DataFrame of per-period returns, one column per asset.
         """
         return log_returns(self._prices) if log else simple_returns(self._prices)
 
@@ -200,16 +219,17 @@ class Portfolio:
         """
         The portfolio's own return series: asset returns combined by current weights.
 
-        Assumes weights are held constant each period (i.e. rebalanced back to
-        target every period) - the standard simplifying assumption for a
-        buy and hold with fixed weights analysis. For turnover/rebalancing
-        effects, see :mod:portpy.strategies.
+        Assumes weights are held constant each period (rebalanced back to target
+        every period). For turnover/rebalancing effects, see :mod:portpy.strategies.
 
         Args:
             period: Compound returns over non-overlapping blocks of this many
                 periods (e.g. period=21 on daily data for a rough monthly
                 series) instead of period-over-period.
-            log: Return log returns instead of simple returns.
+            log: If True, return log returns instead of simple returns.
+
+        Returns:
+            The portfolio's return series, named after the portfolio.
         """
         asset_r = self.asset_returns(log=False)
         port_r = (asset_r * self._weights).sum(axis=1)
@@ -230,9 +250,12 @@ class Portfolio:
         """
         Synthetic aggregated portfolio value, rebased to base, built by compounding .returns().
 
-        Anchored one period before the first return (see prices_from_returns), so
-        a drawdown/CAGR computed on this index correctly reflects the very first
-        period's move instead of silently treating it as the starting point.
+        Args:
+            base: The starting value of the index.
+
+        Returns:
+            A synthetic price series, named after the portfolio, anchored one
+            period before the first return.
         """
         r = self.returns()
         return prices_from_returns(r, base=base).rename(self.name)

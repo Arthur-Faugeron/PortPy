@@ -1,8 +1,6 @@
 # PortPy
 
-Portfolio analysis, risk, and performance metrics that explain themselves.
-PortPy centers on one object, `Portfolio`, which holds your price/return data and weights and
-exposes every metric through a single, self-documenting namespace:
+Portfolio analysis, risk, and performance metrics that explain themselves. PortPy centers on one object, `Portfolio`, which holds your price/return data and weights and exposes every metric through a single, self-documenting namespace:
 
 ```python
 portfolio.metrics.sharpe_ratio(as_result=True).explain()
@@ -12,42 +10,27 @@ portfolio.metrics.sharpe_ratio(as_result=True).explain()
 
 <div class="grid cards" markdown>
 
-- **[Getting Started](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/getting-started.md)**
-  Install PortPy, build your first `Portfolio`, and compute your first metrics.
+- **[Getting Started](./getting-started.md)** Install PortPy, build your first `Portfolio`, and compute your first metrics.
 
-- **[The Portfolio object](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/portfolio.md)**
-  Prices vs. returns, weights, frequency, risk-free rate, and what `.metrics` auto-fills for you.
+- **[The Portfolio object](./guide/portfolio.md)** Prices vs. returns, weights, frequency, risk-free rate, and what `.metrics` auto-fills for you.
 
-- **[Weights & short positions](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/weights.md)**
-  Long/short books, `normalize_weights`, and how negative weights flow through every metric.
+- **[Weights & short positions](./guide/weights.md)** Long/short books, `normalize_weights`, and how negative weights flow through every metric.
 
-- **[Calendars & currencies](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/calendars-and-currency.md)**
-  Combining 24/7 crypto with Mon-Fri equities, and converting multi-currency prices to one base.
+- **[Calendars & currencies](./guide/calendars-and-currency.md)** Combining 24/7 crypto with Mon-Fri equities, and converting multi-currency prices to one base.
 
-- **[Explainability](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/explainability.md)**
-  How `.explain()` works, where the text comes from, and `MetricResult`.
+- **[Explainability](./guide/explainability.md)** How `.explain()` works, where the text comes from, and `MetricResult`.
 
-- **[API Reference](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/api/index.md)**
-  Every function, grouped by module, generated straight from the docstrings.
+- **[API Reference](./api/index.md)** Every function, grouped by module, generated straight from the docstrings.
 
 </div>
 
 ## Why PortPy
 
-Two things distinguish PortPy from a plain metrics library like `empyrical` or `quantstats`
-(both of which PortPy's own test suite validates its numbers against):
+Two things distinguish PortPy from a plain metrics library like `empyrical` or `quantstats` (both of which PortPy's own test suite validates its numbers against):
 
-1. **It models an actual portfolio.** Weights — including shorts — asset-class tags, and
-   explicit calendar/currency alignment are first-class, not something you build by hand
-   before calling a flat function library.
-2. **It teaches while it computes.** Every metric is registered with a plain-language
-   explanation of what it is, how to read it, and whether a given value is good or bad —
-   call `.explain()` on any result.
+1. **It models an actual portfolio.** Weights - including shorts - asset-class tags, and explicit calendar/currency alignment are first-class, not something you build by hand before calling a flat function library.
+2. **It teaches while it computes.** Every metric is registered with a plain-language explanation of what it is, how to read it, and whether a given value is good or bad - call `.explain()` on any result.
 
 ## What's not here yet
 
-`portpy.visualization`, `portpy.models` (optimization, factor models, Monte Carlo), and
-`portpy.strategies` (backtesting) are designed but not implemented in this release. See the
-[Roadmap](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/roadmap.md) for what's 
-planned, and [Architecture](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/architecture.md) 
-for the full design document.
+`portpy.visualization`, `portpy.models` (optimization, factor models, Monte Carlo), and `portpy.strategies` (backtesting) are designed but not implemented in this release. See the [Roadmap](./roadmap.md) for what's planned, and [Architecture](./architecture.md) for the full design document.

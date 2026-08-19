@@ -15,8 +15,7 @@ pip install "portpy-quant[data]"     # yfinance, alpaca-py, python-dotenv (to ru
 pip install "portpy-quant[all]"      # everything above
 ```
 
-Core dependencies (`numpy`, `pandas`, `scipy`, `statsmodels`) are always installed. PortPy
-does **not** depend on a data-fetching library — you bring your own prices.
+Core dependencies (`numpy`, `pandas`, `scipy`, `statsmodels`) are always installed. PortPy does **not** depend on a data-fetching library - you bring your own prices.
 
 ## Your data
 
@@ -24,8 +23,7 @@ does **not** depend on a data-fetching library — you bring your own prices.
 
 - **Index**: a sorted, duplicate-free `DatetimeIndex`.
 - **Columns**: one per asset (ticker symbols, or any label you like).
-- **Values**: prices by default (`input_type="prices"`), or periodic returns
-  (`input_type="returns"`).
+- **Values**: prices by default (`input_type="prices"`), or periodic returns (`input_type="returns"`).
 
 ```python
 import pandas as pd
@@ -39,12 +37,7 @@ prices = pd.DataFrame(
 )
 ```
 
-If you're pulling real data from `yfinance` or `alpaca-py`, see
-[`examples/01_yfinance_getting_started.py`](https://github.com/Arthur-Faugeron/PortPy/blob/main/examples/01_yfinance_getting_started.py)
-and
-[`examples/02_alpaca_multiasset_calendar.py`](https://github.com/Arthur-Faugeron/PortPy/blob/main/examples/02_alpaca_multiasset_calendar.py)
-for the full fetch-and-clean flow, including calendar alignment for crypto and currency
-conversion for non-USD assets.
+If you're pulling real data from `yfinance` or `alpaca-py`, see [`examples/01_yfinance_getting_started.py`](./examples/01_yfinance_getting_started.py) and [`examples/02_alpaca_multiasset_calendar.py`](./examples/02_alpaca_multiasset_calendar.py) for the full fetch-and-clean flow, including calendar alignment for crypto and currency conversion for non-USD assets.
 
 ## Build a Portfolio
 
@@ -63,8 +56,7 @@ print(portfolio)
 
 ## Compute metrics
 
-Every function in `portpy.metrics` is available as a method on `.metrics`, with the
-portfolio's own returns/weights/risk-free rate/frequency filled in automatically:
+Every function in `portpy.metrics` is available as a method on `.metrics`, with the portfolio's own returns/weights/risk-free rate/frequency filled in automatically:
 
 ```python
 portfolio.metrics.sharpe_ratio()                # float
@@ -92,10 +84,8 @@ portfolio.metrics.compare_to_benchmark(benchmark=benchmark_returns)
 
 ## Next steps
 
-- [The Portfolio object](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/portfolio.md) — what `.metrics` auto-fills, and what it doesn't.
-- [Weights & short positions](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/weights.md) — building a long/short book.
-- [Calendars & currencies](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/calendars-and-currency.md) — combining crypto with equities,
-  or assets in different currencies.
-- [Explainability](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/explainability.md) — how `.explain()` works.
-- Run [`examples/tutorial.ipynb`](https://github.com/Arthur-Faugeron/PortPy/blob/main/examples/tutorial.ipynb)
-  for an exhaustive, working tour of every metric function.
+- [The Portfolio object](./guide/portfolio.md) - what `.metrics` auto-fills, and what it doesn't.
+- [Weights & short positions](./guide/weights.md) - building a long/short book.
+- [Calendars & currencies](./guide/calendars-and-currency.md) - combining crypto with equities, or assets in different currencies.
+- [Explainability](./guide/explainability.md) - how `.explain()` works.
+- Run [`examples/tutorial.ipynb`](./examples/tutorial.ipynb) for an exhaustive, working tour of every metric function.

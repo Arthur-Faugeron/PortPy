@@ -29,22 +29,22 @@ sharpe_ratio (metric)
 =====================
 
 What it is:
-  The most widely used risk-adjusted return measure: excess return earned per unit of total volatility taken on.
+  Measures excess return earned per unit of total volatility taken, using the risk-free rate as the return hurdle.
 
 Formula:
   mean(r - rf) / std(r - rf, ddof=1) * sqrt(periods_per_year)
 
 How to read it:
-  A Sharpe of 1.0 means you earned, on average, one standard deviation of excess return for the volatility you took on.
+  A Sharpe of 1.0 means the strategy generated approximately one unit of excess return for each unit of volatility. Higher values indicate better risk-adjusted performance.
 
 Good vs. bad:
-  Rules of thumb: <0 poor (lost money net of the risk-free rate), 0-1 sub-par, 1-2 good, 2-3 very good, >3 excellent (and worth double-checking for overfitting or a very short sample).
+  Higher is generally better. Values above 1 are commonly considered strong, but interpretation depends on the asset class, time period, and strategy complexity.
 
 Caveats:
-  Assumes returns are roughly symmetric - it penalizes upside volatility just as much as downside, and can be misleadingly high for strategies with rare, large negative tail events (e.g. option-selling). Pair with sortino_ratio and max_drawdown.
+  Sharpe treats all volatility as bad, including upside volatility. It can also overstate strategies with asymmetric downside risk, illiquidity, or short backtests. The sqrt(periods_per_year) annualization assumes i.i.d., serially uncorrelated returns - positive autocorrelation (illiquid/infrequently-priced assets) means the annualized figure is overstated (Lo, 2002).
 
 This result:
-  sub-par
+  very good
 ```
 
 ## Why PortPy
@@ -72,13 +72,13 @@ pip install "portpy-quant[all]"        # everything
 
 ## Documentation
 
-- [Getting Started](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/getting-started.md)
-- [User Guide](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/index.md) — the `Portfolio` object, weights & shorts, calendar/currency
+- [Getting Started](./docs/getting-started.md)
+- [User Guide](./docs/index.md) — the `Portfolio` object, weights & shorts, calendar/currency
   alignment, the explainability layer
-- [API Reference](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/api/index.md) — every function, by module
-- [Roadmap](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/roadmap.md) — what's implemented today vs. planned (`models`, `strategies`,
+- [API Reference](./docs/api/index.md) — every function, by module
+- [Roadmap](./docs/roadmap.md) — what's implemented today vs. planned (`models`, `strategies`,
   `visualization` are not yet built)
-- [`examples/`](https://github.com/Arthur-Faugeron/PortPy/blob/main/examples/) — runnable scripts and a full tutorial notebook exercising every
+- [`examples/`](./examples/) — runnable scripts and a full tutorial notebook exercising every
   metric against live Alpaca + Fed (FRED) data
 
 ## Status
@@ -86,7 +86,7 @@ pip install "portpy-quant[all]"        # everything
 PortPy is pre-1.0 (`Development Status :: 4 - Beta`). **Metrics and core** (calendar/currency
 alignment, weights, the explainability layer) are implemented and tested. **Visualization,
 models/optimization, and strategies/backtesting** are designed but not yet built — see the
-[Roadmap](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/roadmap.md).
+[Roadmap](./docs/roadmap.md).
 
 ## License
 

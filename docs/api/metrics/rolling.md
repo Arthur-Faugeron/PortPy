@@ -1,7 +1,6 @@
 # rolling
 
-rolling_metric / expanding_metric are generic engines — they roll any PortPy metric
-function (or your own) over a window. The rest are convenience wrappers over the same engine.
+rolling_metric / expanding_metric are generic engines - they roll any PortPy metric function (or your own) over a window. The rest are convenience wrappers over the same engine.
 
 ::: portpy.metrics.rolling
     options:

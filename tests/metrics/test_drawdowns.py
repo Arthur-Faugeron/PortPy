@@ -64,6 +64,21 @@ def test_time_to_recovery_counts_periods_to_recover(v_shaped_prices):
     assert ttr == pytest.approx(5.0)  # peak at pos 0 (100), back to 100 at pos 5
 
 
+def test_time_to_recovery_as_result_is_metric_result(v_shaped_prices):
+    from portpy.explain import MetricResult
+
+    result = m.time_to_recovery(v_shaped_prices, as_result=True)
+    assert isinstance(result, MetricResult)
+    assert result.name == "time_to_recovery"
+    assert result == pytest.approx(5.0)
+
+
+def test_time_to_recovery_unrecovered_returns_none_even_with_as_result():
+    idx = pd.bdate_range("2020-01-01", periods=5)
+    prices = pd.Series([100, 90, 80, 70, 60], index=idx, dtype=float)
+    assert m.time_to_recovery(prices, as_result=True) is None
+
+
 def test_average_drawdown_is_mean_of_episode_depths(v_shaped_prices):
     episodes = m.top_n_drawdowns(v_shaped_prices, n=100)
     expected = episodes["depth"].mean()
@@ -79,3 +94,30 @@ def test_drawdown_at_risk_matches_percentile_of_drawdown_series(v_shaped_prices)
     dd = m.drawdown_series(v_shaped_prices)
     expected = np.percentile(dd, 5)
     assert m.drawdown_at_risk(v_shaped_prices, confidence=0.95) == pytest.approx(expected)
+
+
+def test_conditional_drawdown_at_risk_at_least_as_severe_as_drawdown_at_risk(v_shaped_prices):
+    dar = m.drawdown_at_risk(v_shaped_prices, confidence=0.95)
+    cdar = m.conditional_drawdown_at_risk(v_shaped_prices, confidence=0.95)
+    assert cdar <= dar
+
+
+def test_conditional_drawdown_at_risk_matches_manual_tail_mean():
+    rng = np.random.default_rng(21)
+    idx = pd.bdate_range("2020-01-01", periods=300)
+    r = pd.Series(rng.normal(0.0002, 0.01, len(idx)), index=idx)
+    prices = (1.0 + r).cumprod()
+    dd = m.drawdown_series(prices).to_numpy()
+    confidence = 0.95
+    alpha = 1.0 - confidence
+    cutoff_index = int((len(dd) - 1) * alpha)
+    expected = float(np.mean(np.partition(dd, cutoff_index)[: cutoff_index + 1]))
+    assert m.conditional_drawdown_at_risk(prices, confidence=confidence) == pytest.approx(expected)
+
+
+def test_conditional_drawdown_at_risk_as_result_is_metric_result(v_shaped_prices):
+    from portpy.explain import MetricResult
+
+    result = m.conditional_drawdown_at_risk(v_shaped_prices, confidence=0.95, as_result=True)
+    assert isinstance(result, MetricResult)
+    assert result.name == "conditional_drawdown_at_risk"

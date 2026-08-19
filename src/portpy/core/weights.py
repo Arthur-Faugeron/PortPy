@@ -4,6 +4,8 @@ Portfolio weight validation and normalization.
 
 from __future__ import annotations
 
+from typing import Literal
+
 import numpy as np
 import pandas as pd
 
@@ -11,6 +13,15 @@ import pandas as pd
 def equal_weights(names: list[str]) -> pd.Series:
     """
     Build a 1/N weight vector for the given asset names.
+
+    Args:
+        names: The asset names to weight equally.
+
+    Returns:
+        A Series of weights indexed by `names`, each equal to 1/len(names).
+
+    Raises:
+        ValueError: If `names` is empty.
     """
     n = len(names)
     if n == 0:
@@ -22,9 +33,10 @@ def normalize_weights(
     weights: pd.Series | np.ndarray | dict | list,
     names: list[str] | None = None,
     allow_negative: bool = True,
+    method: Literal["net", "gross"] = "net",
 ) -> pd.Series:
     """
-    Validate a weights input and rescale it so it sums to 1.
+    Validate a weights input and rescale it to a unit-exposure book.
 
     Args:
         weights: A Series/dict keyed by asset name, or a plain array/list aligned
@@ -33,10 +45,18 @@ def normalize_weights(
             to check that every asset has a weight.
         allow_negative: If False, raise when any weight is negative (e.g. for
             long-only optimizers).
+        method: "net" divides by `weights.sum()` (the usual convention). "gross"
+            divides by `weights.abs().sum()` instead, for long/short books.
 
     Returns:
-        A Series of weights summing to 1.0, indexed by `names` (in that order) when
-        `names` is given.
+        A Series of weights indexed by `names` (in that order) when `names` is
+        given. Sums to 1.0 under "net"; under "gross", `.abs().sum()` is 1.0.
+
+    Raises:
+        TypeError: If `weights` isn't a Series, dict, list, tuple, or ndarray.
+        ValueError: If `names` is required but missing, if any asset is missing
+            a weight, if any weight is NaN, if `allow_negative` is False and a
+            weight is negative, or if the relevant exposure (net or gross) is zero.
     """
     if isinstance(weights, dict):
         weights = pd.Series(weights, dtype=float)
@@ -63,7 +83,12 @@ def normalize_weights(
     if not allow_negative and (weights < 0).any():
         raise ValueError("Negative weights are not allowed here (long-only constraint).")
 
-    total = weights.sum()
-    if np.isclose(total, 0.0):
-        raise ValueError("Weights sum to zero; cannot normalize.")
-    return (weights / total).rename("weight")
+    if method == "gross":
+        denom = weights.abs().sum()
+    elif method == "net":
+        denom = weights.sum()
+    else:
+        raise ValueError(f"method must be 'net' or 'gross', got {method!r}.")
+    if np.isclose(denom, 0.0):
+        raise ValueError(f"Weights' {method} exposure is zero; cannot normalize.")
+    return (weights / denom).rename("weight")

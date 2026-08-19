@@ -41,6 +41,26 @@ def test_capture_ratio_one_when_series_identical(normal_returns):
     assert m.capture_ratio(normal_returns, normal_returns) == pytest.approx(1.0)
 
 
+def test_up_capture_ratio_matches_compounded_subperiod_returns_not_reannualized():
+    idx = pd.bdate_range("2020-01-01", periods=252)
+    rng = np.random.default_rng(31)
+    b = pd.Series(rng.normal(0.0005, 0.01, len(idx)), index=idx)
+    r = b * 1.5
+    mask = b > 0
+    expected = (float((1.0 + r[mask]).prod() - 1.0)) / (float((1.0 + b[mask]).prod() - 1.0))
+    assert m.up_capture_ratio(r, b) == pytest.approx(expected)
+
+
+def test_down_capture_ratio_matches_compounded_subperiod_returns_not_reannualized():
+    idx = pd.bdate_range("2020-01-01", periods=252)
+    rng = np.random.default_rng(33)
+    b = pd.Series(rng.normal(0.0005, 0.01, len(idx)), index=idx)
+    r = b * 0.5
+    mask = b < 0
+    expected = (float((1.0 + r[mask]).prod() - 1.0)) / (float((1.0 + b[mask]).prod() - 1.0))
+    assert m.down_capture_ratio(r, b) == pytest.approx(expected)
+
+
 def test_batting_average_matches_manual(normal_returns, normal_benchmark):
     r, b = normal_returns.align(normal_benchmark, join="inner")
     expected = float((r > b).mean())

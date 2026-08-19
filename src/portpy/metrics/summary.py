@@ -28,6 +28,17 @@ def tearsheet_summary(
 ) -> dict:
     """
     Compute the key headline metrics in one call, each as a self-explaining MetricResult.
+
+    Args:
+        returns: Per-period returns.
+        prices: Price series to use for price-based metrics (cagr,
+            max_drawdown). Defaults to a synthetic series reconstructed from
+            `returns`.
+        rf: Risk-free rate, as an annual rate. Defaults to DEFAULT_RISK_FREE_RATE.
+        periods_per_year: Number of periods in a year, used to annualize.
+
+    Returns:
+        A dict mapping metric name to its MetricResult.
     """
     r = returns.dropna()
     price_series = prices if prices is not None else _returns.prices_from_returns(r)
@@ -57,12 +68,28 @@ def compare_to_benchmark(
 ) -> pd.DataFrame:
     """
     Side-by-side portfolio-vs-benchmark table: absolute metrics for both, plus relative metrics.
+
+    Args:
+        returns: Per-period portfolio returns.
+        benchmark: Per-period benchmark returns.
+        rf: Risk-free rate, as an annual rate. Defaults to DEFAULT_RISK_FREE_RATE.
+        periods_per_year: Number of periods in a year, used to annualize.
+
+    Returns:
+        A DataFrame indexed by metric name, with "portfolio", "benchmark", and
+        "difference" columns. "benchmark" is NaN for metrics that are
+        inherently relative (e.g. beta, alpha, information_ratio).
     """
     r, b = align_pair(returns, benchmark)
     synthetic_r = _returns.prices_from_returns(r)
     synthetic_b = _returns.prices_from_returns(b)
 
     rows: dict[str, dict[str, float]] = {
+        # "benchmark" is intentionally NaN below for metrics that are inherently
+        # relative/one-sided (beta, alpha, correlation, information_ratio,
+        # up_capture_ratio, down_capture_ratio, batting_average) - there is no
+        # separate "benchmark's own value" to report for these, this is not
+        # missing data.
         "annualized_return": {
             "portfolio": _returns.annualized_return(r, periods_per_year=periods_per_year),
             "benchmark": _returns.annualized_return(b, periods_per_year=periods_per_year),
@@ -111,7 +138,7 @@ register(
         formula="summary = {performance_metrics + risk_metrics + drawdown_metrics + distribution_metrics}",
         how_to_read="Review the metrics together rather than individually. Returns describe reward, volatility and drawdowns describe risk, and ratios describe the efficiency of the return generated.",
         good_vs_bad="A strong portfolio typically shows competitive returns, controlled volatility, limited drawdowns, favorable risk-adjusted ratios, and consistent return behavior.",
-        caveats="The summary does not rank portfolios automatically. Different strategies optimize different combinations of return, risk, liquidity, and drawdown characteristics.",
+        caveats="The summary does not rank portfolios automatically. Different strategies optimize different combinations of return, risk, liquidity, and drawdown characteristics. If prices is supplied independently of returns, cagr and max_drawdown are computed from prices while annualized_return comes from returns directly - if the two sources diverge, the figures can silently disagree, and max_drawdown is further sensitive to whether prices includes pre-sample history (see drawdown_series).",
         interpret=lambda v: "Portfolio performance and risk summary",
     )
 )
@@ -124,7 +151,7 @@ register(
         formula="comparison = portfolio_metrics - benchmark_metrics + relative_metrics",
         how_to_read="Positive differences generally indicate portfolio outperformance for return-based metrics. For risk metrics, the preferred direction depends on the objective, such as lower volatility or smaller drawdown.",
         good_vs_bad="A favorable comparison usually combines higher risk-adjusted returns, lower downside risk, positive alpha, strong information ratio, and appropriate benchmark exposure.",
-        caveats="The quality of the comparison depends on benchmark selection. A poorly chosen benchmark can make relative performance conclusions misleading.",
+        caveats="The quality of the comparison depends on benchmark selection. A poorly chosen benchmark can make relative performance conclusions misleading. The \"benchmark\" column is intentionally NaN for metrics that are inherently relative/one-sided (beta, alpha, correlation, information_ratio, up_capture_ratio, down_capture_ratio, batting_average), not missing data.",
         interpret=lambda v: "Portfolio versus benchmark comparison table",
     )
 )

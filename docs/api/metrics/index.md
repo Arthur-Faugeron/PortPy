@@ -1,9 +1,7 @@
 # metrics
 
-Every function here is a pure, stateless function: pass a plain pandas.Series/DataFrame
-and get back a float, Series, DataFrame, or (with as_result=True, where applicable) a
-self-explaining MetricResult. Portfolio.metrics.<name>() is a thin wrapper around these
-same functions, see [The Portfolio object](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/api/metrics/index.md) for what it auto-fills.
+Every function here is a pure, stateless function: pass a plain pandas.Series/DataFrame and get back a float, Series, DataFrame, or (with as_result=True, where applicable) a
+self-explaining MetricResult. Portfolio.metrics.<name>() is a thin wrapper around these same functions, see [The Portfolio object](../portfolio.md) for what it auto-fills.
 
 | Submodule | Covers |
 |---|---|

@@ -27,7 +27,16 @@ __all__ = [
 
 def describe(returns: pd.Series) -> pd.Series:
     """
-    Standard descriptive statistics (count, mean, std, min/max, quartiles) plus skew and kurtosis.
+    Standard descriptive statistics (count, mean, std, min/max, quartiles)
+    plus skew and kurtosis, using pandas' bias-adjusted Fisher-Pearson
+    sample estimators.
+
+    Args:
+        returns: Periodic returns.
+
+    Returns:
+        A Series indexed by statistic name (count, mean, std, min, 25%,
+        50%, 75%, max, skew, kurtosis).
     """
     r = returns.dropna()
     ensure_min_observations(r, 2, "returns")
@@ -39,6 +48,13 @@ def describe(returns: pd.Series) -> pd.Series:
 def normality_test(returns: pd.Series) -> dict:
     """
     Jarque-Bera test of whether returns look Normally distributed.
+
+    Args:
+        returns: Periodic returns. Requires at least 8 observations.
+
+    Returns:
+        A dict with "statistic" (the JB test statistic), "p_value", and
+        "is_normal" (True if p_value > 0.05).
     """
     r = returns.dropna()
     ensure_min_observations(r, 8, "returns")
@@ -54,7 +70,16 @@ def normality_test(returns: pd.Series) -> dict:
 
 def best_worst_periods(returns: pd.Series, n: int = 5) -> dict:
     """
-    The n best and n worst individual periods, each as a Series sorted from most extreme.
+    The n best and n worst individual periods, each as a Series sorted from
+    most extreme to least extreme.
+
+    Args:
+        returns: Periodic returns.
+        n: Number of best/worst periods to return.
+
+    Returns:
+        A dict with keys "best" and "worst", each a Series of the top-n
+        returns.
     """
     r = returns.dropna()
     ensure_min_observations(r, 1, "returns")
@@ -67,6 +92,13 @@ def best_worst_periods(returns: pd.Series, n: int = 5) -> dict:
 def win_rate(returns: pd.Series, as_result: bool = False) -> float | MetricResult:
     """
     Fraction of periods with a strictly positive return.
+
+    Args:
+        returns: Periodic returns.
+        as_result: If True, return a `MetricResult` instead of a plain float.
+
+    Returns:
+        The win rate, or a `MetricResult` wrapping it.
     """
     r = returns.dropna()
     ensure_min_observations(r, 1, "returns")
@@ -76,7 +108,16 @@ def win_rate(returns: pd.Series, as_result: bool = False) -> float | MetricResul
 
 def win_loss_ratio(returns: pd.Series, as_result: bool = False) -> float | MetricResult:
     """
-    Average winning period divided by the average (absolute) losing period.
+    Average winning period's return divided by the average (absolute)
+    losing period's return. Zero-return periods count toward neither bucket.
+
+    Args:
+        returns: Periodic returns.
+        as_result: If True, return a `MetricResult` instead of a plain float.
+
+    Returns:
+        The win/loss ratio, or a `MetricResult` wrapping it. 0.0 if there
+        are no wins or no losses.
     """
     r = returns.dropna()
     ensure_min_observations(r, 1, "returns")
@@ -88,7 +129,15 @@ def win_loss_ratio(returns: pd.Series, as_result: bool = False) -> float | Metri
 
 def positive_periods_pct(returns: pd.Series, as_result: bool = False) -> float | MetricResult:
     """
-    Alias of :func:win_rate, kept for API compatibility with the common naming convention.
+    Alias of `win_rate`, kept for API compatibility with the common naming
+    convention.
+
+    Args:
+        returns: Periodic returns.
+        as_result: If True, return a `MetricResult` instead of a plain float.
+
+    Returns:
+        The fraction of positive periods, or a `MetricResult` wrapping it.
     """
     r = returns.dropna()
     value = win_rate(r, as_result=False)
@@ -96,7 +145,17 @@ def positive_periods_pct(returns: pd.Series, as_result: bool = False) -> float |
 
 
 def monthly_returns_table(returns: pd.Series) -> pd.DataFrame:
-    """Calendar table of compounded returns: rows = years, columns = Jan..Dec, plus a Year total column."""
+    """
+    Calendar table of compounded returns: rows are years, columns are
+    Jan-Dec, plus a Year total column.
+
+    Args:
+        returns: Periodic returns, finer than monthly (e.g. daily/weekly).
+
+    Returns:
+        A DataFrame indexed by year with one column per calendar month
+        (compounded return) plus a "Year" column (compounded annual return).
+    """
     r = returns.dropna()
     ensure_min_observations(r, 1, "returns")
 
@@ -116,7 +175,14 @@ def monthly_returns_table(returns: pd.Series) -> pd.DataFrame:
 
 def return_histogram_data(returns: pd.Series, bins: int = 50) -> tuple[np.ndarray, np.ndarray]:
     """
-    Histogram of the return distribution: (counts, bin_edges), straight from numpy.histogram.
+    Histogram of the return distribution, computed via `numpy.histogram`.
+
+    Args:
+        returns: Periodic returns.
+        bins: Number of histogram bins.
+
+    Returns:
+        A tuple of (counts, bin_edges).
     """
     r = returns.dropna()
     ensure_min_observations(r, 2, "returns")
@@ -131,6 +197,7 @@ register(
         formula="pandas.Series.describe() + skewness/kurtosis",
         how_to_read="Use this as a quick sanity check for the return sample: typical values, spread, and extreme observations.",
         good_vs_bad="A well-behaved distribution should show reasonable center and spread, but there is no universal 'good' threshold for descriptive stats alone.",
+        caveats="skew/kurtosis are pandas' bias-adjusted Fisher-Pearson sample estimators (G1/G2), not plain population moment-ratio formulas - see portpy.metrics.risk.skewness/kurtosis for the exact formulas and a fuller caveat.",
     )
 )
 
@@ -145,6 +212,7 @@ register(
             "Above 50% is intuitively 'good', but a high win rate with small wins and rare huge "
             "losses can still be a bad strategy overall (see win_loss_ratio) - never judge win rate alone."
         ),
+        caveats="Exact-zero-return periods count against win_rate (the check is strict > 0) but are excluded from both buckets in win_loss_ratio, so the two aren't perfectly complementary once zero-return periods exist.",
         interpret=lambda v: f"{v:.1%} of periods were positive",
     )
 )
@@ -160,6 +228,7 @@ register(
             "Read together with win_rate: a strategy can be profitable with a win rate below 50% if "
             "this ratio is high enough (small frequent losses, larger rare wins), and vice versa."
         ),
+        caveats="Exact-zero-return periods are excluded from both the win and loss buckets, unlike win_rate where they count against it - not perfectly complementary once zeros are present. Returns a degenerate 0.0 (via safe_divide) when there are zero wins or zero losses; that's not a literal 'bad' ratio.",
         interpret=lambda v: f"{v:.2f}" + (" (average win smaller than average loss - relies on high win rate)" if v < 1 else " (average win bigger than average loss)"),
     )
 )
@@ -186,6 +255,12 @@ register(
             "Neither outcome is 'good' or 'bad' on its own - it's a diagnostic. Rejecting normality "
             "is a signal to prefer historical/Cornish-Fisher VaR over parametric (Normal-assumption) VaR."
         ),
+        caveats=(
+            "The minimum-observations floor (8) is far below any meaningful sample size for this test "
+            "(textbook guidance is more like N=30-50, and even that's shaky for real financial returns). "
+            "Also, failing to reject normality is not evidence of normality - real daily returns almost "
+            "always reject normality at scale, which is itself expected, not a data problem."
+        ),
         interpret=lambda d: (
             f"p={d['p_value']:.4f} -> "
             + ("reject Normality (fat tails/skew likely - use historical or Cornish-Fisher VaR)"
@@ -211,6 +286,7 @@ register(
         summary="Compounded return for every calendar month, laid out as a year x month grid (the data behind a monthly-returns heatmap).",
         how_to_read="Each cell is that month's compounded return; the 'Year' column is the full calendar year's compounded return. Read row-by-row to spot seasonal patterns or bad years; column-by-column to spot a consistently weak/strong calendar month.",
         good_vs_bad="More green (positive) than red (negative) cells, with the Year column trending positive, is the visual 'good' pattern.",
+        caveats="Assumes input finer than monthly (daily/weekly). Passing already-monthly (or lower-frequency) returns won't error, but produces a distorted/degenerate table.",
     )
 )
 
@@ -221,98 +297,5 @@ register(
         summary="The raw bin counts and edges describing the shape of the return distribution.",
         how_to_read="A tall, narrow, symmetric hump centered near (or slightly above) zero is 'textbook'. Look for a long left tail (crash risk) or a bimodal shape (regime-switching behavior).",
         good_vs_bad="Not graded directly - use skewness/kurtosis/normality_test for quantitative judgments about the shape shown here.",
-    )
-)
-
-
-
-register(
-    Explanation(
-        name="alpha",
-        category="metric",
-        summary="The annualized excess return generated by the portfolio after accounting for the return expected from its benchmark exposure through beta.",
-        formula="(1 + mean(excess_return) - beta * mean(benchmark_excess_return)) ** periods_per_year - 1",
-        how_to_read="Positive alpha means the portfolio produced returns beyond what its benchmark exposure would explain. Negative alpha means underperformance after adjusting for market exposure.",
-        good_vs_bad="Positive and persistent alpha is desirable because it indicates value added beyond benchmark exposure.",
-        caveats="Alpha depends heavily on the chosen benchmark and beta estimate. A poor benchmark can make unrelated returns appear as alpha.",
-        interpret=lambda v: f"{v:+.1%}/yr" + (" (positive excess performance)" if v > 0 else " (negative excess performance)"),
-    )
-)
-
-register(
-    Explanation(
-        name="correlation",
-        category="metric",
-        summary="Measures the linear relationship between portfolio returns and benchmark returns, showing how closely they move together.",
-        formula="covariance(returns, benchmark) / (std(returns) * std(benchmark))",
-        how_to_read="Values close to 1 indicate the portfolio usually moves with the benchmark. Values close to -1 indicate opposite movement. Values near 0 indicate weak linear relationship.",
-        good_vs_bad="High correlation is desirable for benchmark-tracking strategies. Lower correlation is preferable when seeking diversification from the benchmark.",
-        caveats="Correlation only measures linear relationships and can change significantly during different market environments.",
-        interpret=lambda v: f"{v:+.2f}" + (" (strong relationship)" if abs(v) > 0.7 else " (weak/moderate relationship)"),
-    )
-)
-
-register(
-    Explanation(
-        name="r_squared",
-        category="metric",
-        summary="Measures how much of the portfolio return variability can be statistically explained by benchmark movements.",
-        formula="correlation(returns, benchmark) ** 2",
-        how_to_read="A value of 0.80 means 80% of return variation is associated with benchmark movements, while 20% comes from other sources.",
-        good_vs_bad="Higher values indicate stronger benchmark dependence. This is useful for index tracking but may be undesirable for actively differentiated strategies.",
-        caveats="R-squared does not measure whether returns are positive or negative. A portfolio can have high R-squared and still perform poorly.",
-        interpret=lambda v: f"{v:.0%} of variance explained by benchmark",
-    )
-)
-
-register(
-    Explanation(
-        name="up_capture_ratio",
-        category="metric",
-        summary="Measures how much of the benchmark's positive performance the portfolio captures during periods when the benchmark rises.",
-        formula="annualized_return(portfolio_returns_when_benchmark_positive) / annualized_return(benchmark_returns_when_positive)",
-        how_to_read="A value above 1 means the portfolio gains more than the benchmark during positive benchmark periods.",
-        good_vs_bad="Above 1 is generally desirable because it indicates stronger participation in market gains.",
-        caveats="Requires enough positive benchmark periods. Results can be distorted by a small number of strong market moves.",
-        interpret=lambda v: f"{v:.0%} of benchmark upside captured",
-    )
-)
-
-register(
-    Explanation(
-        name="down_capture_ratio",
-        category="metric",
-        summary="Measures how much of the benchmark's negative performance the portfolio experiences during periods when the benchmark falls.",
-        formula="annualized_return(portfolio_returns_when_benchmark_negative) / annualized_return(benchmark_returns_when_negative)",
-        how_to_read="A value below 1 means the portfolio loses less than the benchmark during declining periods.",
-        good_vs_bad="Below 1 is generally desirable because it indicates downside protection.",
-        caveats="The ratio can behave unexpectedly when benchmark losses are small or when the sample contains few negative periods.",
-        interpret=lambda v: f"{v:.0%} of benchmark downside captured" + (" (defensive)" if v < 1 else " (higher downside exposure)"),
-    )
-)
-
-register(
-    Explanation(
-        name="capture_ratio",
-        category="metric",
-        summary="Compares the portfolio's overall annualized return against the benchmark's annualized return without separating positive and negative periods.",
-        formula="annualized_return(portfolio) / annualized_return(benchmark)",
-        how_to_read="A value above 1 means the portfolio produced more annualized return than the benchmark.",
-        good_vs_bad="Higher values indicate stronger relative performance, but they should be interpreted together with up and down capture ratios.",
-        caveats="A single ratio hides the path taken to achieve returns. Two portfolios can have the same capture ratio with very different risk profiles.",
-        interpret=lambda v: f"{v:.2f}x benchmark return",
-    )
-)
-
-register(
-    Explanation(
-        name="batting_average",
-        category="metric",
-        summary="Measures the percentage of periods where the portfolio outperformed the benchmark.",
-        formula="count(portfolio_return > benchmark_return) / count(periods)",
-        how_to_read="A value of 0.55 means the portfolio beat the benchmark in 55% of observed periods.",
-        good_vs_bad="A higher batting average indicates more frequent relative wins, but it does not measure the size of those wins or losses.",
-        caveats="A portfolio can have a low batting average and still outperform if a small number of gains are large enough. Combine with return-based metrics.",
-        interpret=lambda v: f"outperformed benchmark in {v:.0%} of periods",
     )
 )

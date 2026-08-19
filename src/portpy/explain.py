@@ -74,7 +74,14 @@ class Explanation:
 
     def render(self, value: Any = None) -> str:
         """
-        Render this card as plain text, optionally with a value-specific verdict.
+        Render this card as plain text.
+
+        Args:
+            value: Optional concrete value to include a one-line, value-specific
+                verdict for, via `interpret`.
+
+        Returns:
+            The rendered explanation text.
         """
         lines = [f"{self.name} ({self.category})", "=" * len(f"{self.name} ({self.category})")]
         lines += ["", "What it is:", f"  {self.summary}"]
@@ -97,7 +104,13 @@ _REGISTRY: dict[str, Explanation] = {}
 
 def register(explanation: Explanation) -> Explanation:
     """
-    Register (or overwrite) an :class:`Explanation` in the global registry.
+    Register (or overwrite) an Explanation in the global registry.
+
+    Args:
+        explanation: The Explanation to register, keyed by its `name`.
+
+    Returns:
+        The same `explanation`, for convenient use at module load time.
     """
     _REGISTRY[explanation.name] = explanation
     return explanation
@@ -105,7 +118,16 @@ def register(explanation: Explanation) -> Explanation:
 
 def get(name: str) -> Explanation:
     """
-    Look up a registered :class:`Explanation` by name.
+    Look up a registered Explanation by name.
+
+    Args:
+        name: The registry key to look up (e.g. "sharpe_ratio").
+
+    Returns:
+        The registered Explanation.
+
+    Raises:
+        KeyError: If no Explanation is registered under `name`.
     """
     try:
         return _REGISTRY[name]
@@ -118,7 +140,14 @@ def get(name: str) -> Explanation:
 
 def available(category: str | None = None) -> list[str]:
     """
-    List registered explanation names, optionally filtered by category."""
+    List registered explanation names, optionally filtered by category.
+
+    Args:
+        category: If given, restrict to this category (e.g. "metric").
+
+    Returns:
+        A sorted list of registered names.
+    """
     if category is None:
         return sorted(_REGISTRY)
     return sorted(k for k, v in _REGISTRY.items() if v.category == category)
@@ -195,6 +224,16 @@ class MetricResult(float):
         unit: str | None = None,
         meta: dict | None = None,
     ) -> MetricResult:
+        """
+        Args:
+            value: The numeric result.
+            name: The registry key this result explains itself with (e.g. "sharpe_ratio").
+            unit: Optional display unit (e.g. "%/yr").
+            meta: Optional extra metadata carried alongside the value.
+
+        Returns:
+            A new MetricResult.
+        """
         obj = super().__new__(cls, value)
         obj.name = name
         obj.unit = unit
@@ -221,6 +260,12 @@ class MetricResult(float):
     def explain(self, print_it: bool = True) -> str:
         """
         Print (by default) and return the full explanation for this result.
+
+        Args:
+            print_it: If True (default), also print() the rendered text.
+
+        Returns:
+            The rendered explanation text.
         """
         return explain(self, print_it=print_it)
 

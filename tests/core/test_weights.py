@@ -50,3 +50,34 @@ def test_normalize_weights_disallow_negative():
 def test_normalize_weights_reorders_to_match_names():
     w = normalize_weights({"B": 1, "A": 1}, names=["A", "B"])
     assert list(w.index) == ["A", "B"]
+
+
+def test_normalize_weights_default_method_is_net_and_unchanged():
+    w = normalize_weights({"A": 2, "B": 2}, names=["A", "B"])
+    w_explicit = normalize_weights({"A": 2, "B": 2}, names=["A", "B"], method="net")
+    pd.testing.assert_series_equal(w, w_explicit)
+
+
+def test_normalize_weights_gross_normalizes_by_abs_sum_for_long_short_book():
+    # Near dollar-neutral: net exposure is a small fraction of gross exposure.
+    w = normalize_weights({"A": 1.0, "B": -0.98}, names=["A", "B"], method="gross")
+    assert w.abs().sum() == pytest.approx(1.0)
+    assert w["A"] == pytest.approx(1.0 / 1.98)
+    assert w["B"] == pytest.approx(-0.98 / 1.98)
+
+
+def test_normalize_weights_gross_vs_net_differ_for_long_short_book():
+    net = normalize_weights({"A": 1.0, "B": -0.98}, names=["A", "B"], method="net")
+    gross = normalize_weights({"A": 1.0, "B": -0.98}, names=["A", "B"], method="gross")
+    # Net exposure (0.02) blows the net-normalized weights up to a much larger magnitude.
+    assert abs(net["A"]) > abs(gross["A"])
+
+
+def test_normalize_weights_gross_zero_raises():
+    with pytest.raises(ValueError):
+        normalize_weights({"A": 0.0}, names=["A"], method="gross")
+
+
+def test_normalize_weights_invalid_method_raises():
+    with pytest.raises(ValueError):
+        normalize_weights({"A": 1.0, "B": 1.0}, names=["A", "B"], method="bogus")

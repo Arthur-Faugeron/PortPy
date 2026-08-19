@@ -32,7 +32,19 @@ def alpha(
     as_result: bool = False,
 ) -> float | MetricResult:
     """
-    Kensen's alpha: annualized excess return unexplained by exposure (beta) to the benchmark.
+    Jensen's alpha: the portfolio's annualized excess return unexplained by
+    its beta exposure to the benchmark.
+
+    Args:
+        returns: Periodic portfolio returns.
+        benchmark: Periodic benchmark returns, aligned to `returns`.
+        rf: Annual risk-free rate used to compute excess returns.
+        periods_per_year: Number of return periods per year, used for
+            annualization.
+        as_result: If True, return a `MetricResult` instead of a plain float.
+
+    Returns:
+        Annualized alpha, or a `MetricResult` wrapping it.
     """
     r, b = align_pair(returns, benchmark)
     ensure_min_observations(r, 2, "returns")
@@ -46,6 +58,14 @@ def alpha(
 def correlation(returns: pd.Series, benchmark: pd.Series, as_result: bool = False) -> float | MetricResult:
     """
     Pearson correlation coefficient between returns and benchmark.
+
+    Args:
+        returns: Periodic portfolio returns.
+        benchmark: Periodic benchmark returns, aligned to `returns`.
+        as_result: If True, return a `MetricResult` instead of a plain float.
+
+    Returns:
+        The correlation coefficient, or a `MetricResult` wrapping it.
     """
     r, b = align_pair(returns, benchmark)
     ensure_min_observations(r, 2, "returns")
@@ -55,16 +75,45 @@ def correlation(returns: pd.Series, benchmark: pd.Series, as_result: bool = Fals
 
 def r_squared(returns: pd.Series, benchmark: pd.Series, as_result: bool = False) -> float | MetricResult:
     """
-    Fraction of the portfolio's variance explained by the benchmark: correlation(r, b)^2.
+    Fraction of the portfolio's return variance explained by the benchmark.
+
+    Args:
+        returns: Periodic portfolio returns.
+        benchmark: Periodic benchmark returns, aligned to `returns`.
+        as_result: If True, return a `MetricResult` instead of a plain float.
+
+    Returns:
+        R-squared (correlation squared), or a `MetricResult` wrapping it.
     """
     value = float(correlation(returns, benchmark) ** 2)
     return MetricResult(value, "r_squared") if as_result else value
 
 
 def _capture(returns: pd.Series, benchmark: pd.Series, periods_per_year: int) -> float:
+    """
+    Ratio of annualized (geometric) portfolio return to annualized benchmark
+    return, over the full contiguous series.
+
+    Returns:
+        The ratio, or NaN if the annualized benchmark return is zero.
+    """
     ar = annualized_return(returns, periods_per_year=periods_per_year, geometric=True)
     ab = annualized_return(benchmark, periods_per_year=periods_per_year, geometric=True)
     return ar / ab if ab != 0 else np.nan
+
+
+def _capture_uncontiguous(returns: pd.Series, benchmark: pd.Series) -> float:
+    """
+    Ratio of compounded (but not annualized) sub-period returns. Used for
+    up/down capture, where masking to up-only or down-only periods makes the
+    sub-period non-contiguous, so annualization does not apply.
+
+    Returns:
+        The ratio, or NaN if the compounded benchmark return is zero.
+    """
+    total_r = float((1.0 + returns).prod() - 1.0)
+    total_b = float((1.0 + benchmark).prod() - 1.0)
+    return total_r / total_b if total_b != 0 else np.nan
 
 
 def up_capture_ratio(
@@ -74,11 +123,22 @@ def up_capture_ratio(
     as_result: bool = False,
 ) -> float | MetricResult:
     """
-    Ratio of annualized returns during periods when the benchmark was positive.
+    Ratio of compounded returns during periods when the benchmark was positive.
+
+    Args:
+        returns: Periodic portfolio returns.
+        benchmark: Periodic benchmark returns, aligned to `returns`.
+        periods_per_year: Unused; accepted only for signature consistency
+            with `down_capture_ratio`/`capture_ratio`.
+        as_result: If True, return a `MetricResult` instead of a plain float.
+
+    Returns:
+        The up-capture ratio, or a `MetricResult` wrapping it. NaN if fewer
+        than 2 periods have a positive benchmark return.
     """
     r, b = align_pair(returns, benchmark)
     mask = b > 0
-    value = _capture(r[mask], b[mask], periods_per_year) if mask.sum() >= 2 else np.nan
+    value = _capture_uncontiguous(r[mask], b[mask]) if mask.sum() >= 2 else np.nan
     return MetricResult(value, "up_capture_ratio") if as_result else value
 
 
@@ -89,11 +149,22 @@ def down_capture_ratio(
     as_result: bool = False,
 ) -> float | MetricResult:
     """
-    Ratio of annualized returns during periods when the benchmark was negative.
+    Ratio of compounded returns during periods when the benchmark was negative.
+
+    Args:
+        returns: Periodic portfolio returns.
+        benchmark: Periodic benchmark returns, aligned to `returns`.
+        periods_per_year: Unused; accepted only for signature consistency
+            with `up_capture_ratio`/`capture_ratio`.
+        as_result: If True, return a `MetricResult` instead of a plain float.
+
+    Returns:
+        The down-capture ratio, or a `MetricResult` wrapping it. NaN if fewer
+        than 2 periods have a negative benchmark return.
     """
     r, b = align_pair(returns, benchmark)
     mask = b < 0
-    value = _capture(r[mask], b[mask], periods_per_year) if mask.sum() >= 2 else np.nan
+    value = _capture_uncontiguous(r[mask], b[mask]) if mask.sum() >= 2 else np.nan
     return MetricResult(value, "down_capture_ratio") if as_result else value
 
 
@@ -104,7 +175,19 @@ def capture_ratio(
     as_result: bool = False,
 ) -> float | MetricResult:
     """
-    Overall ratio of annualized returns, unconditional on the benchmark's sign.
+    Ratio of the portfolio's annualized return to the benchmark's annualized
+    return, over the full contiguous series (unconditional on the
+    benchmark's sign).
+
+    Args:
+        returns: Periodic portfolio returns.
+        benchmark: Periodic benchmark returns, aligned to `returns`.
+        periods_per_year: Number of return periods per year, used for
+            annualization.
+        as_result: If True, return a `MetricResult` instead of a plain float.
+
+    Returns:
+        The capture ratio, or a `MetricResult` wrapping it.
     """
     r, b = align_pair(returns, benchmark)
     ensure_min_observations(r, 2, "returns")
@@ -114,7 +197,16 @@ def capture_ratio(
 
 def batting_average(returns: pd.Series, benchmark: pd.Series, as_result: bool = False) -> float | MetricResult:
     """
-    Fraction of periods in which returns beat benchmark.
+    Fraction of periods in which the portfolio's return strictly exceeded
+    the benchmark's return.
+
+    Args:
+        returns: Periodic portfolio returns.
+        benchmark: Periodic benchmark returns, aligned to `returns`.
+        as_result: If True, return a `MetricResult` instead of a plain float.
+
+    Returns:
+        The batting average, or a `MetricResult` wrapping it.
     """
     r, b = align_pair(returns, benchmark)
     ensure_min_observations(r, 1, "returns")
@@ -130,7 +222,7 @@ register(
         formula="(1 + mean(excess_return) - beta * mean(benchmark_excess_return)) ** periods_per_year - 1",
         how_to_read="Positive alpha means the portfolio produced returns beyond what its benchmark exposure would explain. Negative alpha means underperformance after adjusting for market exposure.",
         good_vs_bad="Positive and persistent alpha is desirable because it indicates value added beyond benchmark exposure.",
-        caveats="Alpha depends heavily on the chosen benchmark and beta estimate. A poor benchmark can make unrelated returns appear as alpha.",
+        caveats="Alpha depends heavily on the chosen benchmark and beta estimate. A poor benchmark can make unrelated returns appear as alpha. The per-period CAPM residual is annualized by geometric compounding, a defensible but not the only convention - see the docstring.",
         interpret=lambda v: f"{v:+.1%}/yr" + (" (positive excess performance)" if v > 0 else " (negative excess performance)"),
     )
 )
@@ -156,7 +248,7 @@ register(
         formula="correlation(returns, benchmark) ** 2",
         how_to_read="A value of 0.80 means 80% of return variation is associated with benchmark movements, while 20% comes from other sources.",
         good_vs_bad="Higher values indicate stronger benchmark dependence. This is useful for index tracking but may be undesirable for actively differentiated strategies.",
-        caveats="R-squared does not measure whether returns are positive or negative. A portfolio can have high R-squared and still perform poorly.",
+        caveats="R-squared does not measure whether returns are positive or negative. A portfolio can have high R-squared and still perform poorly. Single-benchmark only.",
         interpret=lambda v: f"{v:.0%} of variance explained by benchmark",
     )
 )
@@ -166,10 +258,18 @@ register(
         name="up_capture_ratio",
         category="metric",
         summary="Measures how much of the benchmark's positive performance the portfolio captures during periods when the benchmark rises.",
-        formula="annualized_return(portfolio_returns_when_benchmark_positive) / annualized_return(benchmark_returns_when_positive)",
+        formula="compounded_return(portfolio_returns_when_benchmark_positive) / compounded_return(benchmark_returns_when_positive)  [not re-annualized]",
         how_to_read="A value above 1 means the portfolio gains more than the benchmark during positive benchmark periods.",
         good_vs_bad="Above 1 is generally desirable because it indicates stronger participation in market gains.",
-        caveats="Requires enough positive benchmark periods. Results can be distorted by a small number of strong market moves.",
+        caveats=(
+            "Requires enough positive benchmark periods. Results can be distorted by a small number of "
+            "strong market moves. The up-day subsample is non-contiguous, so this compares compounded "
+            "sub-period returns directly rather than re-annualizing them (re-annualizing a filtered, "
+            "non-contiguous subsample is not statistically valid - there's no real 'years elapsed' to "
+            "raise a growth factor to). Note this means the value can differ from empyrical's up_capture, "
+            "which does re-annualize the subsample via annual_return() - a known, documented methodology "
+            "difference, not a bug."
+        ),
         interpret=lambda v: f"{v:.0%} of benchmark upside captured",
     )
 )
@@ -179,10 +279,15 @@ register(
         name="down_capture_ratio",
         category="metric",
         summary="Measures how much of the benchmark's negative performance the portfolio experiences during periods when the benchmark falls.",
-        formula="annualized_return(portfolio_returns_when_benchmark_negative) / annualized_return(benchmark_returns_when_negative)",
+        formula="compounded_return(portfolio_returns_when_benchmark_negative) / compounded_return(benchmark_returns_when_negative)  [not re-annualized]",
         how_to_read="A value below 1 means the portfolio loses less than the benchmark during declining periods.",
         good_vs_bad="Below 1 is generally desirable because it indicates downside protection.",
-        caveats="The ratio can behave unexpectedly when benchmark losses are small or when the sample contains few negative periods.",
+        caveats=(
+            "The ratio can behave unexpectedly when benchmark losses are small or when the sample "
+            "contains few negative periods. Compares compounded sub-period returns directly rather than "
+            "re-annualizing them - see up_capture_ratio's caveat for why, and for the resulting known "
+            "difference from empyrical's down_capture."
+        ),
         interpret=lambda v: f"{v:.0%} of benchmark downside captured" + (" (defensive)" if v < 1 else " (higher downside exposure)"),
     )
 )
@@ -208,7 +313,7 @@ register(
         formula="count(portfolio_return > benchmark_return) / count(periods)",
         how_to_read="A value of 0.55 means the portfolio beat the benchmark in 55% of observed periods.",
         good_vs_bad="A higher batting average indicates more frequent relative wins, but it does not measure the size of those wins or losses.",
-        caveats="A portfolio can have a low batting average and still outperform if a small number of gains are large enough. Combine with return-based metrics.",
+        caveats="A portfolio can have a low batting average and still outperform if a small number of gains are large enough. Combine with return-based metrics. Uses a strict >, so exact ties don't count as a win.",
         interpret=lambda v: f"outperformed benchmark in {v:.0%} of periods",
     )
 )

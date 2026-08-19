@@ -2,8 +2,8 @@
 Optional currency-conversion helper.
 
 By default, PortPy assumes every asset in your DataFrame is denominated in the
-same currency and never converts anything. If you *do* have a dated FX-rate
-series, use `convert_to_base_currency` before constructing a `Portfolio` to bring
+same currency and never converts anything. If you do have a dated FX-rate
+series, use convert_to_base_currency before constructing a Portfolio to bring
 everything into one base currency.
 """
 
@@ -23,18 +23,32 @@ def convert_to_base_currency(
 
     Args:
         prices: Columns = asset symbols, index = dates, values = prices in each
-            asset's *native* currency.
+            asset's native currency.
         fx_rates: Columns = 3-letter currency codes, index = dates, values = units
-            of `base_currency` per 1 unit of that currency (a direct multiplier -
-            e.g. an "EUR" column of 1.08 means 1 EUR = 1.08 of `base_currency`).
-            Reindexed to `prices.index` and forward-filled, so it doesn't need to
+            of base_currency per 1 unit of that currency - a direct quote (e.g.
+            an "EUR" column of 1.08 means 1 EUR = 1.08 of base_currency; invert
+            an indirect vendor quote with 1 / rate before passing it in).
+            Reindexed to prices.index and forward-filled, so it doesn't need to
             share the exact same calendar.
         asset_currencies: Mapping of asset symbol -> currency code. Assets already
-            in `base_currency` (or missing from this dict) are left untouched.
+            in base_currency (or missing from this dict) are left untouched.
         base_currency: The target currency code (e.g. "USD").
 
     Returns:
-        A new DataFrame, same shape as `prices`, denominated in `base_currency`.
+        A new DataFrame, same shape as prices, denominated in base_currency.
+
+    Raises:
+        ValueError: If an asset's currency has no matching column in fx_rates.
+
+    fx_rates must hold direct quotes (units of base_currency per unit of
+    local currency). Most vendor data quotes pairs the other way round (e.g.
+    USDJPY = JPY per USD, an indirect quote from a USD-base perspective) -
+    feeding that in as-is does not raise, it silently multiplies prices by
+    roughly 100-150x too much or too little; invert with 1 / rate if your feed
+    is indirect. Two smaller gaps: the reindex/ffill has no fill limit, so a
+    stale or missing FX feed can silently carry forward a months-old rate
+    indefinitely, and there's no triangulation - if you have USD/EUR and
+    USD/JPY but need EUR/JPY directly, this raises rather than cross-computing it.
     """
     converted = prices.copy()
     fx_aligned = fx_rates.reindex(prices.index).ffill()

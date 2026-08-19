@@ -2,7 +2,7 @@
 
 > This is PortPy's internal design document: the full package structure, public API 
 > surface, and stage-by-stage build plan. If you just want to use PortPy, start with
-> [Getting Started](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/getting-started.md) 
+> [Getting Started](./getting-started.md) 
 > instead — this page is for contributors and anyone curious how the pieces fit 
 > together, including the parts (`models`, `strategies`,`visualization`) that don't exist yet.
 
@@ -126,16 +126,16 @@ The `Portfolio` class is the central object. It holds:
 
 ### 4.1 Basic Accessors
 
-- `.prices` → price DataFrame.
-- `.returns(period=1, log=False)` → the portfolio's own aggregated return series (weights applied).
-- `.asset_returns(log=False)` → per-asset return DataFrame (not weight-aggregated).
-- `.price_index(base=100.0)` → synthetic portfolio value series, rebased.
+- `.prices`: price DataFrame.
+- `.returns(period=1, log=False)`: the portfolio's own aggregated return series (weights applied).
+- `.asset_returns(log=False)`: per-asset return DataFrame (not weight-aggregated).
+- `.price_index(base=100.0)`: synthetic portfolio value series, rebased.
 - `.asset_names`, `.num_assets`, `.weights`.
 - `.set_weights(weights)`, `.set_risk_free_rate(rate)`.
 
 ### 4.2 Metrics (via `.metrics`)
 
-Every function in `portpy.metrics` is available as `portfolio.metrics.<name>(...)`. Parameters named `returns`, `y`, `prices`, `weights`, or `cov_matrix` are auto-filled from the portfolio when the call uses only keyword arguments; `rf` and `periods_per_year` default to the portfolio's own `risk_free_rate` and `frequency`. See the [API reference](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/api/metrics/index.md) for the full list, grouped by submodule (returns, risk, performance, drawdowns, rolling, distributions, benchmarks, regressions, covariance, summary, costs).
+Every function in `portpy.metrics` is available as `portfolio.metrics.<name>(...)`. Parameters named `returns`, `y`, `prices`, `weights`, or `cov_matrix` are auto-filled from the portfolio when the call uses only keyword arguments; `rf` and `periods_per_year` default to the portfolio's own `risk_free_rate` and `frequency`. See the [API reference](./api/metrics/index.md) for the full list, grouped by submodule (returns, risk, performance, drawdowns, rolling, distributions, benchmarks, regressions, covariance, summary, costs).
 
 ### 4.3 Visualization (via `.visualization`) — not yet implemented
 
@@ -153,7 +153,7 @@ Planned: a `BaseStrategy` interface, a `backtest()` engine, and concrete strateg
 
 ## 5. Explainability (`portpy.explain`)
 
-Every metric can explain itself. `Explanation` is a structured knowledge card (summary, formula, how-to-read, good-vs-bad, caveats, and an optional `interpret` function that turns a live value into a one-line verdict), registered per-function at the bottom of the module that defines it. `MetricResult` is a `float` subclass carrying its own name, unit, and `.explain()` method. `portpy.explain(name_or_result)` is the single dispatch point — see [The Explainability Layer](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/guide/explainability.md).
+Every metric can explain itself. `Explanation` is a structured knowledge card (summary, formula, how-to-read, good-vs-bad, caveats, and an optional `interpret` function that turns a live value into a one-line verdict), registered per-function at the bottom of the module that defines it. `MetricResult` is a `float` subclass carrying its own name, unit, and `.explain()` method. `portpy.explain(name_or_result)` is the single dispatch point — see [The Explainability Layer](./guide/explainability.md).
 
 ---
 
@@ -175,7 +175,7 @@ Factor models, stochastic process simulation/calibration, Monte Carlo (VaR/CVaR,
 
 `BaseStrategy`, a `backtest()` engine, position sizing (Kelly, vol targeting), a library of concrete strategies (buy-and-hold, momentum variants, mean-reversion, pairs trading, breakout, vol targeting, factor tilt, sector rotation), and evaluation tooling (walk-forward analysis, Monte Carlo robustness).
 
-See [Roadmap](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/roadmap.md) for the current, plain-language version of this table.
+See [Roadmap](./roadmap.md) for the current, plain-language version of this table.
 
 ---
 
@@ -196,4 +196,4 @@ See [Roadmap](https://github.com/Arthur-Faugeron/PortPy/blob/main/docs/roadmap.m
 - Optional extras: `viz` (plotly, matplotlib, seaborn, kaleido), `models` (scikit-learn, arch, hmmlearn), `data` (yfinance, alpaca-py, python-dotenv), `all`, `dev`.
 - Build backend: `hatchling`.
 
-See [CHANGELOG](https://github.com/Arthur-Faugeron/PortPy/blob/main/CHANGELOG.md) for release history.
+See [CHANGELOG](./CHANGELOG.md) for release history.

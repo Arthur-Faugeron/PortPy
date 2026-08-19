@@ -1,4 +1,6 @@
-"""Shared pytest fixtures: synthetic return/price series with known properties."""
+"""
+Shared pytest fixtures: synthetic return/price series with known properties.
+"""
 
 from __future__ import annotations
 

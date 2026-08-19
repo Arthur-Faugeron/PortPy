@@ -45,6 +45,13 @@ _VAR_METHODS = ("historical", "parametric", "cornish_fisher")
 def variance(returns: pd.Series, as_result: bool = False) -> float | MetricResult:
     """
     Sample variance of per-period returns (ddof=1, not annualized).
+
+    Args:
+        returns: Per-period returns.
+        as_result: If True, return a MetricResult instead of a plain float.
+
+    Returns:
+        The sample variance, in squared-return units.
     """
     r = returns.dropna()
     ensure_min_observations(r, 2, "returns")
@@ -60,6 +67,15 @@ def volatility(
 ) -> float | MetricResult:
     """
     Standard deviation of returns (ddof=1), annualized by sqrt(periods_per_year) by default.
+
+    Args:
+        returns: Per-period returns.
+        annualized: If True (default), scale by sqrt(periods_per_year).
+        periods_per_year: Number of periods in a year, used to annualize.
+        as_result: If True, return a MetricResult instead of a plain float.
+
+    Returns:
+        The (optionally annualized) standard deviation of returns.
     """
     r = returns.dropna()
     ensure_min_observations(r, 2, "returns")
@@ -77,12 +93,19 @@ def downside_deviation(
     as_result: bool = False,
 ) -> float | MetricResult:
     """
-    Root-mean-square of returns falling short of mar, dividing by the full sample size N.
+    Root-mean-square of returns falling short of `mar`, dividing by the full sample size N.
 
-    This is the Sortino-style "downside deviation". It only penalizes shortfalls
-    below the minimum acceptable return (mar, an annual rate), but (unlike
-    semi_variance) still divides by every observation, not just the ones
-    below the threshold.
+    Args:
+        returns: Per-period returns.
+        mar: Minimum acceptable return, as an annual rate. Defaults to
+            DEFAULT_MAR.
+        annualized: If True (default), scale by sqrt(periods_per_year).
+        periods_per_year: Number of periods in a year, used to de-annualize
+            `mar` and to annualize the result.
+        as_result: If True, return a MetricResult instead of a plain float.
+
+    Returns:
+        The (optionally annualized) downside deviation.
     """
     r = returns.dropna()
     ensure_min_observations(r, 1, "returns")
@@ -101,20 +124,23 @@ def semi_variance(
     as_result: bool = False,
 ) -> float | MetricResult:
     """
-    Mean squared shortfall below mar, dividing only by the count of below-threshold periods.
+    Mean squared shortfall below `mar`, dividing by the full sample size N.
 
-    Classic statistical semi-variance, as distinct from downside_deviation
-    (which divides by the full sample size N). This version is more sensitive to
-    portfolios with only a handful of bad periods.
+    Args:
+        returns: Per-period returns.
+        mar: Minimum acceptable return, as an annual rate. Defaults to
+            DEFAULT_MAR.
+        periods_per_year: Number of periods in a year, used to de-annualize `mar`.
+        as_result: If True, return a MetricResult instead of a plain float.
+
+    Returns:
+        The mean squared shortfall, in squared-return units.
     """
     r = returns.dropna()
     ensure_min_observations(r, 1, "returns")
     mar_period = periodic_rate_from_annual(mar, periods_per_year)
-    below = r[r < mar_period]
-    if len(below) == 0:
-        value = 0.0
-    else:
-        value = float(np.mean(np.square(below - mar_period)))
+    shortfall = np.minimum(r - mar_period, 0.0)
+    value = float(np.mean(np.square(shortfall)))
     return MetricResult(value, "semi_variance") if as_result else value
 
 
@@ -125,19 +151,26 @@ def value_at_risk(
     as_result: bool = False,
 ) -> float | MetricResult:
     """
-    The per-period loss threshold exceeded only 1. Confidence of the time.
+    Per-period loss threshold exceeded only (1 - confidence) of the time.
 
-    Reported in return units and signed like a return (a negative number means a
-    loss).
-    e.g. -0.03 at 95% confidence means "there's a 5% chance of losing more
-    than 3% in a single period."
+    Reported in return units and signed like a return (a negative number
+    means a loss); e.g. -0.03 at 95% confidence means "there's a 5% chance of
+    losing more than 3% in a single period."
 
     Args:
-        method: "historical" (empirical percentile, no distributional
-            assumption), "parametric" (assumes returns are Normal), or
-            "cornish_fisher" (parametric VaR adjusted for the sample's own
-            skewness and excess kurtosis - usually more realistic for fat-tailed
-            return series).
+        returns: Per-period returns.
+        method: One of "historical" (empirical percentile), "parametric"
+            (assumes Normally-distributed returns), or "cornish_fisher"
+            (parametric VaR adjusted for the sample's skewness and kurtosis).
+        confidence: Confidence level in (0, 1), e.g. 0.95. Defaults to
+            DEFAULT_CONFIDENCE_LEVEL.
+        as_result: If True, return a MetricResult instead of a plain float.
+
+    Returns:
+        The per-period VaR at the given confidence level.
+
+    Raises:
+        ValueError: If `method` is not one of the recognized methods.
     """
     validate_confidence(confidence)
     r = returns.dropna()
@@ -172,11 +205,21 @@ def conditional_var(
     as_result: bool = False,
 ) -> float | MetricResult:
     """
-    Conditional VaR / Expected Shortfall: the *average* loss in the worst 1. Confidence of periods.
+    Conditional VaR / Expected Shortfall: the average loss in the worst
+    (1 - confidence) fraction of periods.
 
-    Always at least as severe as value_at_risk at the same confidence.
-    It answers "given that we're in the bad tail, how bad is it on average?"
+    Always at least as severe as value_at_risk at the same confidence. It
+    answers "given that we're in the bad tail, how bad is it on average?"
     rather than just where the tail starts.
+
+    Args:
+        returns: Per-period returns.
+        confidence: Confidence level in (0, 1), e.g. 0.95. Defaults to
+            DEFAULT_CONFIDENCE_LEVEL.
+        as_result: If True, return a MetricResult instead of a plain float.
+
+    Returns:
+        The average per-period loss in the tail beyond the VaR cutoff.
     """
     validate_confidence(confidence)
     r = returns.dropna().to_numpy()
@@ -190,7 +233,14 @@ def conditional_var(
 
 def tail_ratio(returns: pd.Series, as_result: bool = False) -> float | MetricResult:
     """
-    Ratio of the size of the right tail (95th pct) to the left tail (5th pct).
+    Ratio of the size of the right tail (95th percentile) to the left tail (5th percentile).
+
+    Args:
+        returns: Per-period returns.
+        as_result: If True, return a MetricResult instead of a plain float.
+
+    Returns:
+        The tail ratio.
     """
     r = returns.dropna()
     ensure_min_observations(r, 2, "returns")
@@ -201,6 +251,13 @@ def tail_ratio(returns: pd.Series, as_result: bool = False) -> float | MetricRes
 def skewness(returns: pd.Series, as_result: bool = False) -> float | MetricResult:
     """
     Sample skewness (adjusted Fisher-Pearson) of the return distribution.
+
+    Args:
+        returns: Per-period returns.
+        as_result: If True, return a MetricResult instead of a plain float.
+
+    Returns:
+        The sample skewness.
     """
     r = returns.dropna()
     ensure_min_observations(r, 3, "returns")
@@ -211,6 +268,13 @@ def skewness(returns: pd.Series, as_result: bool = False) -> float | MetricResul
 def kurtosis(returns: pd.Series, as_result: bool = False) -> float | MetricResult:
     """
     Sample excess kurtosis (0 = Normal-like tails; positive = fatter tails than Normal).
+
+    Args:
+        returns: Per-period returns.
+        as_result: If True, return a MetricResult instead of a plain float.
+
+    Returns:
+        The sample excess kurtosis.
     """
     r = returns.dropna()
     ensure_min_observations(r, 4, "returns")
@@ -220,8 +284,14 @@ def kurtosis(returns: pd.Series, as_result: bool = False) -> float | MetricResul
 
 def ulcer_index(prices: pd.Series, as_result: bool = False) -> float | MetricResult:
     """
-    Root-mean-square of percentage drawdowns
-    Penalizes both deep and prolonged drawdowns.
+    Root-mean-square of percentage drawdowns. Penalizes both deep and prolonged drawdowns.
+
+    Args:
+        prices: Price series.
+        as_result: If True, return a MetricResult instead of a plain float.
+
+    Returns:
+        The ulcer index.
     """
     from portpy.metrics.drawdowns import drawdown_series
 
@@ -232,7 +302,15 @@ def ulcer_index(prices: pd.Series, as_result: bool = False) -> float | MetricRes
 
 def pain_index(prices: pd.Series, as_result: bool = False) -> float | MetricResult:
     """
-    Mean absolute drawdown across the whole period (a.k.a. average drawdown)."""
+    Mean absolute drawdown across the whole period (a.k.a. average drawdown).
+
+    Args:
+        prices: Price series.
+        as_result: If True, return a MetricResult instead of a plain float.
+
+    Returns:
+        The pain index.
+    """
     from portpy.metrics.drawdowns import drawdown_series
 
     dd = drawdown_series(prices)
@@ -242,7 +320,17 @@ def pain_index(prices: pd.Series, as_result: bool = False) -> float | MetricResu
 
 def beta(returns: pd.Series, benchmark: pd.Series, as_result: bool = False) -> float | MetricResult:
     """
-    Sensitivity of returns to benchmark: Cov(r, b) / Var(b)
+    Sensitivity of returns to a benchmark.
+
+    Formula: Cov(r, b) / Var(b)
+
+    Args:
+        returns: Per-period returns.
+        benchmark: Per-period benchmark returns.
+        as_result: If True, return a MetricResult instead of a plain float.
+
+    Returns:
+        The beta coefficient.
     """
     r, b = align_pair(returns, benchmark)
     ensure_min_observations(r, 2, "returns")
@@ -261,6 +349,16 @@ def tracking_error(
 ) -> float | MetricResult:
     """
     Standard deviation of the return difference (returns - benchmark), i.e. active risk.
+
+    Args:
+        returns: Per-period returns.
+        benchmark: Per-period benchmark returns.
+        annualized: If True (default), scale by sqrt(periods_per_year).
+        periods_per_year: Number of periods in a year, used to annualize.
+        as_result: If True, return a MetricResult instead of a plain float.
+
+    Returns:
+        The (optionally annualized) tracking error.
     """
     r, b = align_pair(returns, benchmark)
     ensure_min_observations(r, 2, "returns")
@@ -295,7 +393,13 @@ register(
             "about direction - a fast-rising asset can be just as volatile as a falling one. Always "
             "read it alongside the return."
         ),
-        caveats="Penalizes upside and downside swings equally, unlike downside_deviation or semi_variance.",
+        caveats=(
+            "Penalizes upside and downside swings equally, unlike downside_deviation or semi_variance. "
+            "The sqrt(periods_per_year) annualization also assumes i.i.d., serially uncorrelated returns; "
+            "positive autocorrelation (e.g. illiquid or infrequently-priced assets) means the naive "
+            "annualized figure understates true risk (Lo, 2002). The same caveat applies to sharpe_ratio, "
+            "sortino_ratio, information_ratio, and tracking_error, which all use the same scaling."
+        ),
         interpret=lambda v: f"{v:.1%}/yr" + (" (high - equity-like or more volatile)" if v > 0.25 else (" (low - bond-like)" if v < 0.08 else " (moderate)")),
     )
 )
@@ -308,7 +412,7 @@ register(
         formula="sqrt(mean(min(r - mar, 0)^2)) * sqrt(periods_per_year)  [if annualized]",
         how_to_read="Same units and scale as volatility, but will always be <= volatility for the same series since only bad periods count.",
         good_vs_bad="Lower is better. Compare it to volatility: a downside deviation much smaller than volatility means most of the swings are on the upside.",
-        caveats="Divides by the full sample size N (Sortino's original convention) - see semi_variance for the alternative that divides only by below-threshold periods.",
+        caveats="Divides by the full sample size N (Sortino's original convention). sqrt(semi_variance(...)) uses the same convention and matches this function exactly at annualized=False.",
         interpret=lambda v: f"{v:.1%}/yr of downside risk",
     )
 )
@@ -317,10 +421,10 @@ register(
     Explanation(
         name="semi_variance",
         category="metric",
-        summary="Mean squared shortfall below a minimum acceptable return (MAR), averaged only over the periods that actually fell short.",
-        formula="mean((r - mar)^2 for r < mar)",
-        how_to_read="In squared-return units; compare across portfolios rather than reading in isolation.",
-        good_vs_bad="Lower is better (less/milder downside). More sensitive to a few very bad periods than downside_deviation, since it doesn't dilute by the full sample size.",
+        summary="Mean squared shortfall below a minimum acceptable return (MAR), averaged over the full sample - Markowitz's original semi-variance.",
+        formula="mean(min(r - mar, 0)^2)  [averaged over all N periods, not just the shortfalls]",
+        how_to_read="In squared-return units; compare across portfolios rather than reading in isolation. sqrt(semi_variance(r, mar, annualized=False)) equals downside_deviation(r, mar, annualized=False) exactly.",
+        good_vs_bad="Lower is better (less/milder downside).",
         caveats="If nothing fell below the MAR, this is exactly 0 - always check how many periods were below threshold before trusting a 0.",
         interpret=lambda v: f"{v:.6f} squared-return units below the MAR",
     )
@@ -331,12 +435,16 @@ register(
         name="value_at_risk",
         category="metric",
         summary="The loss threshold you'd only expect to breach a small fraction of the time (e.g. 5% of periods at 95% confidence).",
-        formula="historical: percentile(r, 100*(1-confidence))  |  parametric: mean + z*std",
+        formula="historical: percentile(r, 100*(1-confidence))  |  parametric: mean + z*std  |  cornish_fisher: mean + z_cf*std (z adjusted for sample skew/kurtosis)",
         how_to_read="A 95% VaR of -0.03 means: in 95% of periods, you did NOT lose more than 3%. It does NOT say anything about how bad the worst 5% get.",
         good_vs_bad="Closer to zero (less negative) is better/safer. Only comparable across series measured at the same confidence level and frequency.",
         caveats=(
             "VaR ignores everything beyond the threshold - two portfolios can have identical VaR "
-            "and wildly different tail risk. Use conditional_var (CVaR) alongside it for that reason."
+            "and wildly different tail risk. Use conditional_var (CVaR) alongside it for that reason. "
+            "parametric assumes Normally-distributed returns (understates fat tails); cornish_fisher "
+            "corrects for sample skew/kurtosis but is a local approximation that degrades - and can "
+            "become non-monotonic - at high skew/kurtosis or very extreme confidence levels. All three "
+            "methods are single-period estimates; none scale to a multi-period holding horizon."
         ),
         interpret=lambda v: f"{v:.2%} - expect a worse-than-this loss only in the excluded tail probability",
     )
@@ -346,7 +454,7 @@ register(
     Explanation(
         name="conditional_var",
         category="metric",
-        summary="Also called Expected Shortfall (ES/CVaR): the average loss *given* that you're already in the bad tail defined by VaR.",
+        summary="Also called Expected Shortfall (ES/CVaR): the average loss given that you're already in the bad tail defined by VaR.",
         formula="mean(r for r <= VaR cutoff)",
         how_to_read="A 95% CVaR of -0.05 means: on the worst 5% of periods, the average loss was 5%.",
         good_vs_bad="Closer to zero is better/safer. Always at least as negative as VaR at the same confidence - a large gap between VaR and CVaR signals a fat, dangerous tail.",
@@ -375,7 +483,7 @@ register(
         formula="adjusted Fisher-Pearson sample skewness",
         how_to_read="Positive skew = occasional large gains with frequent small losses; negative skew = occasional large losses with frequent small gains.",
         good_vs_bad="Positive is generally considered more desirable for a long-only investor (limited, frequent losses; occasional big wins), though many trend/momentum strategies deliberately run negative skew in exchange for a higher hit rate.",
-        caveats="Very sensitive to sample size and outliers in short return histories.",
+        caveats="Very sensitive to sample size and outliers in short return histories. This is the bias-adjusted sample estimator, not the raw population moment ratio - the two only converge asymptotically, so treat it as noisy at typical financial sample sizes (same caveat applies to kurtosis).",
         interpret=lambda v: f"{v:+.2f}" + (" (negative skew - watch for rare large losses)" if v < -0.5 else (" (positive skew - rare large gains)" if v > 0.5 else " (roughly symmetric)")),
     )
 )
@@ -388,7 +496,7 @@ register(
         formula="excess kurtosis = kurtosis - 3 (so 0 = Normal-like)",
         how_to_read="Positive excess kurtosis means extreme returns (both directions) are more frequent than a Normal distribution would predict.",
         good_vs_bad="There's no 'good' side - high kurtosis just means fatter tails, i.e. VaR/volatility computed assuming Normality will understate real tail risk.",
-        caveats="Financial returns are almost always leptokurtic (excess kurtosis > 0) - don't be alarmed by a positive number, but do combine with cornish_fisher VaR instead of parametric VaR when it's large.",
+        caveats="Financial returns are almost always leptokurtic (excess kurtosis > 0) - don't be alarmed by a positive number, but do combine with cornish_fisher VaR instead of parametric VaR when it's large. Like skewness, this is a bias-adjusted sample estimator, not the raw population moment ratio - noisy at typical financial sample sizes.",
         interpret=lambda v: f"{v:+.2f}" + (" (fat tails - Normal-based risk estimates will understate real risk)" if v > 1 else " (close to Normal)"),
     )
 )
@@ -400,7 +508,8 @@ register(
         summary="A drawdown-based risk measure that penalizes both the depth and the duration of drawdowns (unlike volatility, which ignores duration).",
         formula="sqrt(mean(drawdown_pct^2)) over the whole price history",
         how_to_read="Higher values mean drawdowns were deeper and/or the portfolio spent more time underwater.",
-        good_vs_bad="Lower is better. Useful for comparing strategies with similar volatility but very different drawdown *experience* (a choppy-but-quick-to-recover series scores lower than a slow bleed of the same depth).",
+        good_vs_bad="Lower is better. Useful for comparing strategies with similar volatility but very different drawdown experience (a choppy-but-quick-to-recover series scores lower than a slow bleed of the same depth).",
+        caveats="Time-weights every period underwater, unlike average_drawdown's unweighted per-episode mean. Inherits drawdown_series's sample-window caveat.",
         interpret=lambda v: f"{v:.2%}",
     )
 )
@@ -413,6 +522,7 @@ register(
         formula="mean(|drawdown_pct|) over the whole price history",
         how_to_read="A pain index of 0.05 means the portfolio was, on average, 5% below its running peak.",
         good_vs_bad="Lower is better. Often paired with return to form a 'pain ratio' analogous to Calmar but using average rather than max drawdown.",
+        caveats="Time-weights every period underwater, unlike average_drawdown's unweighted per-episode mean. Inherits drawdown_series's sample-window caveat.",
         interpret=lambda v: f"{v:.2%} average distance below peak",
     )
 )
@@ -429,7 +539,7 @@ register(
             "suggests a defensive profile; beta > 1 an aggressive one; beta near 0 suggests low "
             "correlation to that particular benchmark (not necessarily low risk overall)."
         ),
-        caveats="A single historical beta assumes a stable linear relationship - it can shift substantially in market stress (beta instability).",
+        caveats="A single historical beta assumes a stable linear relationship - it can shift substantially in market stress (beta instability). No Dimson adjustment for thin/non-synchronous trading (biases beta toward zero) and no Blume adjustment (empirical mean-reversion toward 1 out of sample); also sensitive to the chosen return frequency and lookback window.",
         interpret=lambda v: f"{v:.2f}" + (" (more volatile than the benchmark)" if v > 1.1 else (" (more defensive than the benchmark)" if v < 0.9 else " (moves roughly in line with the benchmark)")),
     )
 )
@@ -438,7 +548,7 @@ register(
     Explanation(
         name="tracking_error",
         category="metric",
-        summary="How much the portfolio's returns deviate, period to period, from a benchmark - the volatility of the *difference*, not of the portfolio itself.",
+        summary="How much the portfolio's returns deviate, period to period, from a benchmark - the volatility of the difference, not of the portfolio itself.",
         formula="std(returns - benchmark, ddof=1) * sqrt(periods_per_year)  [if annualized]",
         how_to_read="A tracking error of 0.03/yr means the portfolio's return typically differs from the benchmark's by about 3 percentage points per year.",
         good_vs_bad=(

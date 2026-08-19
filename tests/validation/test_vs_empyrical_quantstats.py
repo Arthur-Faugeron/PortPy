@@ -73,12 +73,29 @@ def _run_full_comparison(r: pd.Series, b: pd.Series) -> None:
     assert risk.beta(r, b) == pytest.approx(ep_beta, abs=ABS_TOL)
     assert bench.alpha(r, b, rf=0.0) == pytest.approx(ep_alpha, abs=1e-4)
 
-    assert bench.up_capture_ratio(r, b) == pytest.approx(empyrical.up_capture(r, b), abs=1e-3)
-    assert bench.down_capture_ratio(r, b) == pytest.approx(empyrical.down_capture(r, b), abs=1e-3)
-
     assert bench.correlation(r, b) == pytest.approx(float(r.corr(b)), abs=ABS_TOL)
 
     # --- Documented methodology differences: same ballpark, not exact ---
+
+    # empyrical's up_capture/down_capture re-annualize the filtered, non-contiguous
+    # up-day/down-day subsample via its own capture() = annual_return(masked) /
+    # annual_return(masked_factor) - i.e. it raises a compounded growth factor to
+    # periods_per_year/n where n is the (small, non-contiguous) count of up/down
+    # days, which is not a statistically valid use of geometric annualization (see
+    # corrections.md finding #4). portpy's up_capture_ratio/down_capture_ratio were
+    # fixed to compare compounded sub-period returns directly instead, without
+    # re-annualizing. Because empyrical's re-annualization exponent (1/years) can be
+    # large when few up/down days exist in the sample, the two methodologies can
+    # diverge substantially (observed up to ~3x on real crypto data in this
+    # validation harness) - same sign and rough ballpark, not point-for-point.
+    ep_up = empyrical.up_capture(r, b)
+    ep_down = empyrical.down_capture(r, b)
+    pp_up = bench.up_capture_ratio(r, b)
+    pp_down = bench.down_capture_ratio(r, b)
+    assert np.sign(pp_up) == np.sign(ep_up)
+    assert np.sign(pp_down) == np.sign(ep_down)
+    assert pp_up == pytest.approx(ep_up, rel=1.0)
+    assert pp_down == pytest.approx(ep_down, rel=1.0)
 
     # portpy's cagr uses period-count years (n/periods_per_year, matching
     # empyrical's own annual_return); quantstats' cagr uses actual elapsed
@@ -87,6 +104,28 @@ def _run_full_comparison(r: pd.Series, b: pd.Series) -> None:
     portpy_cagr = rts.cagr(synthetic_prices)
     qs_cagr = float(qs.cagr(r))
     assert portpy_cagr == pytest.approx(qs_cagr, rel=0.05)
+
+    # quantstats' information_ratio() never annualizes - it's exactly
+    # mean(diff)/std(diff). portpy's default (annualized=True) differs by
+    # precisely sqrt(periods_per_year); at annualized=False the two formulas
+    # are identical and should match to numerical precision.
+    qs_ir = float(qs.information_ratio(r, b))
+    assert perf.information_ratio(r, b, annualized=False) == pytest.approx(qs_ir, abs=ABS_TOL)
+    assert perf.information_ratio(r, b, annualized=True) == pytest.approx(
+        qs_ir * np.sqrt(252), abs=ABS_TOL
+    )
+
+    # quantstats' treynor_ratio() divides the TOTAL cumulative return over the
+    # whole sample (unannualized, not divided by elapsed years) by beta, not a
+    # mean-per-period return scaled by periods_per_year - a genuinely different
+    # metric definition (not a rescaling of portpy's own treynor_ratio), so
+    # there's no fixed conversion factor between the two on a multi-year
+    # sample. This asserts our documented understanding of quantstats' formula
+    # against its actual output, using portpy's own primitives, rather than
+    # against portpy's treynor_ratio.
+    beta_v = risk.beta(r, b)
+    qs_treynor = float(qs.treynor_ratio(r, b, rf=0.0))
+    assert qs_treynor == pytest.approx(rts.total_return(r) / beta_v, rel=1e-4)
 
     # portpy's rf/mar are ANNUAL rates (de-annualized internally); at rf=0
     # this is moot (0 annual == 0 per-period), which is exactly why the sharpe/

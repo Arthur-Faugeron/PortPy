@@ -103,3 +103,22 @@ def test_kappa_three_ratio_runs_without_error(normal_returns):
 def test_sterling_and_burke_ratios_run_without_error(normal_returns):
     assert np.isfinite(m.sterling_ratio(normal_returns))
     assert np.isfinite(m.burke_ratio(normal_returns))
+
+
+def test_sterling_ratio_default_drawdown_adjustment_is_backward_compatible(normal_returns):
+    # drawdown_adjustment defaults to 0.0, so the original (pre-opt-in-param) behavior
+    # is preserved unless the caller explicitly asks for the classic +10% convention.
+    from portpy.metrics.drawdowns import top_n_drawdowns
+    from portpy.metrics.returns import annualized_return, prices_from_returns
+
+    ann_ret = annualized_return(normal_returns, periods_per_year=252)
+    worst = top_n_drawdowns(prices_from_returns(normal_returns), n=5)
+    expected = ann_ret / float(worst["depth"].abs().mean())
+    assert m.sterling_ratio(normal_returns) == pytest.approx(expected)
+
+
+def test_sterling_ratio_plus_ten_percent_convention_lowers_the_ratio(normal_returns):
+    default = m.sterling_ratio(normal_returns)
+    classic = m.sterling_ratio(normal_returns, drawdown_adjustment=0.10)
+    # A larger denominator (avg drawdown + 10pp) means a smaller ratio for a positive-return series.
+    assert classic < default

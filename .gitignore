@@ -48,6 +48,7 @@ htmlcov/
 # Personal working notes
 /planning.md
 /debug.ipynb
+corrections.md
 
 # Example outputs
 examples/output/

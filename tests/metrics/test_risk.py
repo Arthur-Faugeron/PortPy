@@ -28,19 +28,19 @@ def test_downside_deviation_matches_manual_formula():
     assert m.downside_deviation(r, mar=0.0, annualized=False) == pytest.approx(expected)
 
 
-def test_semi_variance_uses_only_below_threshold_denominator():
+def test_semi_variance_uses_full_sample_denominator():
     r = pd.Series([0.02, -0.03, 0.01, -0.05, 0.0])
-    below = r[r < 0]
-    expected = float(np.mean((below - 0.0) ** 2))
+    shortfall = np.minimum(r.to_numpy() - 0.0, 0.0)
+    expected = float(np.mean(shortfall**2))  # divides by N=5, not count-below-threshold=2
     assert m.semi_variance(r, mar=0.0) == pytest.approx(expected)
 
 
-def test_semi_variance_and_downside_deviation_differ_in_denominator():
+def test_semi_variance_matches_downside_deviation_squared():
     r = pd.Series([0.02, -0.03, 0.01, -0.05, 0.0])
     sv = m.semi_variance(r, mar=0.0)
     dd = m.downside_deviation(r, mar=0.0, annualized=False)
-    # semi_variance divides by 2 (count below threshold), downside^2 divides by 5 (full N)
-    assert sv != pytest.approx(dd**2)
+    # Both divide by the full sample size N, so sqrt(semi_variance) == downside_deviation.
+    assert sv == pytest.approx(dd**2)
 
 
 def test_value_at_risk_historical_matches_percentile():

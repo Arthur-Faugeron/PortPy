@@ -14,7 +14,18 @@ import pandas as pd
 
 def ensure_datetime_index(data: pd.Series | pd.DataFrame, name: str = "data") -> pd.Series | pd.DataFrame:
     """
-    Raise if `data` isn't indexed by a sorted, duplicate-free DatetimeIndex.
+    Validate that data is indexed by a sorted, duplicate-free DatetimeIndex.
+
+    Args:
+        data: The Series or DataFrame to check.
+        name: Label used to identify `data` in the raised error message.
+
+    Returns:
+        `data`, unchanged, for chaining.
+
+    Raises:
+        TypeError: If the index isn't a `DatetimeIndex`.
+        ValueError: If the index has duplicate dates or isn't sorted ascending.
     """
     if not isinstance(data.index, pd.DatetimeIndex):
         raise TypeError(
@@ -34,12 +45,32 @@ def ensure_datetime_index(data: pd.Series | pd.DataFrame, name: str = "data") ->
 
 
 def ensure_min_observations(data: pd.Series | pd.DataFrame, min_obs: int = 2, name: str = "data") -> None:
+    """
+    Validate that data has at least `min_obs` rows.
+
+    Args:
+        data: The Series or DataFrame to check.
+        min_obs: The minimum number of observations required.
+        name: Label used to identify `data` in the raised error message.
+
+    Raises:
+        ValueError: If `data` has fewer than `min_obs` rows.
+    """
     n = len(data)
     if n < min_obs:
         raise ValueError(f"{name} needs at least {min_obs} observation(s), got {n}.")
 
 
 def validate_confidence(confidence: float) -> None:
+    """
+    Validate that a confidence level is a proper probability strictly between 0 and 1.
+
+    Args:
+        confidence: The confidence level to check (e.g. 0.95 for 95%).
+
+    Raises:
+        ValueError: If `confidence` is not in the open interval (0, 1).
+    """
     if not (0.0 < confidence < 1.0):
         raise ValueError(f"confidence must be in (0, 1), got {confidence}.")
 
@@ -47,6 +78,18 @@ def validate_confidence(confidence: float) -> None:
 def to_series(data: pd.Series | pd.DataFrame, column: str | None = None, name: str = "data") -> pd.Series:
     """
     Coerce a single-column DataFrame (or an explicit column) down to a Series.
+
+    Args:
+        data: A Series (returned as-is) or a DataFrame to reduce to one column.
+        column: The column to select. Required if `data` has more than one column.
+        name: Label used to identify `data` in the raised error message.
+
+    Returns:
+        `data` itself if it's already a Series, otherwise the selected column.
+
+    Raises:
+        ValueError: If `data` is a multi-column DataFrame and `column` isn't given.
+        TypeError: If `data` is neither a Series nor a DataFrame.
     """
     if isinstance(data, pd.Series):
         return data
@@ -63,10 +106,19 @@ def to_series(data: pd.Series | pd.DataFrame, column: str | None = None, name: s
 
 def align_pair(a: pd.Series, b: pd.Series, name_a: str = "returns", name_b: str = "benchmark") -> tuple[pd.Series, pd.Series]:
     """
-    Inner-join two return series on their index and drop rows where either is NaN.
+    Inner-join two series on their index and drop rows where either is NaN.
 
-    Raises if the overlap is empty - a common silent bug when comparing series that
-    don't actually share any dates (e.g. different calendars or date ranges).
+    Args:
+        a: The first series.
+        b: The second series.
+        name_a: Label for `a` used in the raised error message.
+        name_b: Label for `b` used in the raised error message.
+
+    Returns:
+        `(a, b)`, each restricted to their shared, non-NaN dates.
+
+    Raises:
+        ValueError: If `a` and `b` have no overlapping, non-NaN dates.
     """
     joined = pd.concat([a.rename(name_a), b.rename(name_b)], axis=1, join="inner").dropna()
     if joined.empty:
@@ -80,6 +132,13 @@ def align_pair(a: pd.Series, b: pd.Series, name_a: str = "returns", name_b: str 
 def periodic_rate_from_annual(annual_rate: float, periods_per_year: int) -> float:
     """
     Convert an annual rate to a per-period rate via geometric (compounding) de-annualization.
+
+    Args:
+        annual_rate: The annual rate to convert (e.g. 0.05 for 5%/year).
+        periods_per_year: Number of periods in a year (e.g. 252 for trading days).
+
+    Returns:
+        The equivalent per-period rate.
     """
     return (1.0 + annual_rate) ** (1.0 / periods_per_year) - 1.0
 
@@ -87,6 +146,14 @@ def periodic_rate_from_annual(annual_rate: float, periods_per_year: int) -> floa
 def safe_divide(numerator: float, denominator: float) -> float:
     """
     Divide, returning +/-inf (or 0 if numerator is also 0) instead of raising on a zero denominator.
+
+    Args:
+        numerator: The dividend.
+        denominator: The divisor.
+
+    Returns:
+        `numerator / denominator`, or a signed infinity (or 0.0) if `denominator`
+        is effectively zero.
     """
     if abs(denominator) < 1e-15:
         if abs(numerator) < 1e-15:

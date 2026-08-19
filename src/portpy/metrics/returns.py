@@ -34,32 +34,55 @@ __all__ = [
 
 def simple_returns(prices: pd.Series | pd.DataFrame) -> pd.Series | pd.DataFrame:
     """
-    Period-over-period simple (arithmetic) returns
+    Period-over-period simple (arithmetic) returns.
+
+    Args:
+        prices: Price series or DataFrame of price columns.
+
+    Returns:
+        Simple returns aligned to `prices`, with the first period dropped.
     """
     return prices.pct_change().iloc[1:]
 
 
 def log_returns(prices: pd.Series | pd.DataFrame) -> pd.Series | pd.DataFrame:
+    """
+    Period-over-period continuously-compounded (log) returns.
+
+    Args:
+        prices: Price series or DataFrame of price columns.
+
+    Returns:
+        Log returns aligned to `prices`, with the first period dropped.
+    """
     return np.log(prices / prices.shift(1)).iloc[1:]
 
 
 def cumulative_returns(returns: pd.Series | pd.DataFrame) -> pd.Series | pd.DataFrame:
     """
-    Compounded cumulative return series.
+    Compounded cumulative return series from a series of simple returns.
+
+    Args:
+        returns: Simple per-period returns.
+
+    Returns:
+        Cumulative return at each period, e.g. 0.25 for a 25% total gain.
     """
     return (1.0 + returns).cumprod() - 1.0  # type: ignore[attr-defined]
 
 
 def prices_from_returns(returns: pd.Series | pd.DataFrame, base: float = 1.0) -> pd.Series | pd.DataFrame:
     """
-    Reconstruct a price-like series from returns, anchored at base one period before the first return.
+    Reconstruct a price-like series from simple returns, anchored at `base`
+    one period before the first return.
 
-    This matches the structure of a real price series (whose first observation is
-    a plain starting price, untouched by any return).
-    So simple_returns(prices_from_returns(r)) recovers r exactly, including its
-    first observation. Feeding a bare (1 + r).cumprod() into a drawdown/CAGR
-    function instead silently drops the first period's return and can understate
-    a drawdown that started immediately.
+    Args:
+        returns: Simple per-period returns.
+        base: Starting price level. Defaults to 1.0.
+
+    Returns:
+        A price series (or DataFrame) one period longer than `returns`, whose
+        first value is `base` and which compounds `returns` from there.
     """
     idx = returns.index
     if isinstance(idx, pd.DatetimeIndex):
@@ -78,12 +101,29 @@ def prices_from_returns(returns: pd.Series | pd.DataFrame, base: float = 1.0) ->
 
 def rebased_returns(prices: pd.Series | pd.DataFrame, base: float = 100.0) -> pd.Series | pd.DataFrame:
     """
-    Rescale a price series so it starts at base (default 100), preserving pct changes.
+    Rescale a price series so it starts at `base`, preserving percentage changes.
+
+    Args:
+        prices: Price series or DataFrame of price columns.
+        base: Starting value for the rescaled series. Defaults to 100.
+
+    Returns:
+        Rescaled price series, same shape as `prices`.
     """
     return prices / prices.iloc[0] * base
 
 
 def total_return(returns: pd.Series, as_result: bool = False) -> float | MetricResult:
+    """
+    Total compounded return over the full return series.
+
+    Args:
+        returns: Per-period simple returns.
+        as_result: If True, return a MetricResult instead of a plain float.
+
+    Returns:
+        The total compounded return, e.g. 0.35 for a 35% gain.
+    """
     r = returns.dropna()
     ensure_min_observations(r, 1, "returns")
     value = float((1.0 + r).prod() - 1.0)
@@ -97,13 +137,19 @@ def annualized_return(
     as_result: bool = False,
 ) -> float | MetricResult:
     """
-    Annualized return.
+    Annualized return computed from a return series.
 
     Args:
-        geometric: If True (default), compounds the total return and raises it
-            to periods_per_year / n_periods (this is the CAGR of the return
-            series). If False, simply scales the arithmetic mean return by
-            periods_per_year - simpler, but ignores compounding.
+        returns: Per-period simple returns.
+        periods_per_year: Number of periods in a year, used to annualize.
+        geometric: If True (default), compounds the total return and raises
+            it to periods_per_year / n_periods (the CAGR of the series). If
+            False, scales the arithmetic mean return by periods_per_year.
+        as_result: If True, return a MetricResult instead of a plain float.
+
+    Returns:
+        The annualized return. When geometric and the compounded growth
+        factor is non-positive (a total loss or worse), returns -1.0.
     """
     r = returns.dropna()
     ensure_min_observations(r, 1, "returns")
@@ -111,7 +157,12 @@ def annualized_return(
     if geometric:
         total = float((1.0 + r).prod())
         years = n / periods_per_year
-        value = total ** (1.0 / years) - 1.0 if years > 0 else np.nan
+        if years <= 0:
+            value = np.nan
+        elif total <= 0.0:
+            value = -1.0
+        else:
+            value = total ** (1.0 / years) - 1.0
     else:
         value = float(r.mean()) * periods_per_year
     return MetricResult(value, "annualized_return", unit="%") if as_result else float(value)
@@ -124,17 +175,43 @@ def cagr(
 ) -> float | MetricResult:
     """
     Compound Annual Growth Rate, computed directly from a price series.
+
+    Args:
+        prices: Price series spanning the measurement period.
+        periods_per_year: Number of periods in a year, used to annualize.
+        as_result: If True, return a MetricResult instead of a plain float.
+
+    Returns:
+        The CAGR. Returns -1.0 if the start/end price ratio is non-positive,
+        rather than raising.
     """
     p = prices.dropna()
     ensure_min_observations(p, 2, "prices")
     n_periods = len(p) - 1
     years = n_periods / periods_per_year
     total = float(p.iloc[-1] / p.iloc[0])
-    value = total ** (1.0 / years) - 1.0 if years > 0 else np.nan
+    if years <= 0:
+        value = np.nan
+    elif total <= 0.0:
+        value = -1.0
+    else:
+        value = total ** (1.0 / years) - 1.0
     return MetricResult(value, "cagr", unit="%") if as_result else float(value)
 
 
 def average_return(returns: pd.Series, geometric: bool = False, as_result: bool = False) -> float | MetricResult:
+    """
+    Average return per period, arithmetic (default) or geometric.
+
+    Args:
+        returns: Per-period simple returns.
+        geometric: If True, computes exp(mean(log1p(returns))) - 1 instead of
+            the arithmetic mean. Defaults to arithmetic.
+        as_result: If True, return a MetricResult instead of a plain float.
+
+    Returns:
+        The average per-period return.
+    """
     r = returns.dropna()
     ensure_min_observations(r, 1, "returns")
     if geometric:
@@ -146,8 +223,15 @@ def average_return(returns: pd.Series, geometric: bool = False, as_result: bool 
 
 def excess_returns(returns: pd.Series, benchmark_or_rf: pd.Series | float) -> pd.Series:
     """
-    Per-period excess return
-    Returns minus a benchmark series or a constant per-period rate.
+    Per-period return in excess of a benchmark series or a constant rate.
+
+    Args:
+        returns: Per-period simple returns.
+        benchmark_or_rf: A benchmark return series (aligned by date) or a
+            constant per-period rate to subtract.
+
+    Returns:
+        Per-period excess returns.
     """
     if isinstance(benchmark_or_rf, pd.Series):
         joined = pd.concat([returns.rename("r"), benchmark_or_rf.rename("b")], axis=1, join="inner").dropna()
@@ -157,7 +241,14 @@ def excess_returns(returns: pd.Series, benchmark_or_rf: pd.Series | float) -> pd
 
 def active_returns(returns: pd.Series, benchmark: pd.Series) -> pd.Series:
     """
-    Alias of excess_returns restricted to a benchmark series (as opposed to a rate).
+    Per-period return relative to a benchmark series.
+
+    Args:
+        returns: Per-period simple returns.
+        benchmark: Benchmark per-period simple returns.
+
+    Returns:
+        Per-period active (portfolio minus benchmark) returns.
     """
     return excess_returns(returns, benchmark)
 
@@ -165,12 +256,12 @@ def active_returns(returns: pd.Series, benchmark: pd.Series) -> pd.Series:
 register(
     Explanation(
         name="simple_returns",
-        category="metric",
+        category="function",
         summary=("The arithmetic percentage change in price from one period to the next. This is the standard return representation used for portfolio calculations."),
         formula="P_t / P_(t-1) - 1",
         how_to_read=("A value of 0.01 means the asset gained 1% during that period. A value of -0.02 means it lost 2%."),
         good_vs_bad=("Higher returns are generally desirable, but simple returns only describe performance, not the amount of risk required to achieve it."),
-        caveats=("Simple returns are not additive through time. Multi-period performance must be calculated by compounding returns."),
+        caveats=("Simple returns are additive across assets (weight-average them for a portfolio return) but not additive through time - use log_returns for that, and don't mix the two conventions."),
         interpret=lambda v: f"{v:+.2%} period return",
     )
 )
@@ -178,12 +269,12 @@ register(
 register(
     Explanation(
         name="log_returns",
-        category="metric",
+        category="function",
         summary=("The continuously compounded return calculated from the logarithmic change in price. Commonly used in quantitative finance and statistical modeling."),
         formula="ln(P_t / P_(t-1))",
         how_to_read=("A value of 0.02 represents approximately a 2% continuously compounded return for the period."),
         good_vs_bad=("Useful for quantitative analysis because log returns are additive across time and often behave better in mathematical models."),
-        caveats=("Log returns are not identical to simple returns, especially during large price movements. They should not be interpreted as exact percentage gains."),
+        caveats=("Log returns are not identical to simple returns, especially during large price movements, and are not additive across assets - convert to simple returns before weight-averaging a portfolio."),
         interpret=lambda v: f"{v:+.2%} log return",
     )
 )
@@ -191,12 +282,12 @@ register(
 register(
     Explanation(
         name="cumulative_returns",
-        category="metric",
+        category="function",
         summary=("The compounded growth of an investment over a sequence of returns, showing how wealth evolves through time."),
         formula="prod(1 + r_t) - 1",
         how_to_read=("A value of 0.25 means an initial investment increased by 25% over the entire measured period."),
         good_vs_bad=("Higher cumulative return indicates stronger absolute performance, but it must be evaluated alongside volatility, drawdown, and investment horizon."),
-        caveats=("Cumulative return ignores the path taken. Two investments can have the same ending return but very different risk experiences."),
+        caveats=("Cumulative return ignores the path taken. Two investments can have the same ending return but very different risk experiences. Assumes simple returns - feeding log returns in silently produces a wrong number."),
         interpret=lambda v: f"{v:+.1%} cumulative return",
     )
 )
@@ -204,12 +295,12 @@ register(
 register(
     Explanation(
         name="prices_from_returns",
-        category="metric",
+        category="function",
         summary=("Transforms a return series into a synthetic price/equity curve by compounding returns from a chosen starting value."),
         formula="base * prod(1 + r_t)",
         how_to_read=("A resulting value of 1.20 means a starting investment of 1.00 grew to 1.20 after applying the return sequence."),
         good_vs_bad=("Useful for creating equity curves from return data and enabling price-based analysis such as drawdowns and CAGR."),
-        caveats=("This does not recreate real market prices. It only reconstructs the growth path implied by the returns."),
+        caveats=("This does not recreate real market prices. It only reconstructs the growth path implied by the returns, and assumes those returns are simple (not log) returns."),
         interpret=lambda v: f"{v:.2f} reconstructed price level",
     )
 )
@@ -240,7 +331,10 @@ register(
         good_vs_bad=("Higher annualized returns are generally preferable, but they should always "
             "be evaluated together with volatility, drawdown, and consistency."),
         caveats=("Geometric annualization is preferred because it accounts for compounding. "
-            "Arithmetic annualization can overstate expected growth in volatile series."),
+            "Arithmetic annualization can overstate expected growth in volatile series. "
+            "The geometric branch needs a strictly positive compounded growth factor - a "
+            "leveraged/short series that compounds to a total loss or worse returns -1.0 "
+            "rather than a fractional power of a non-positive number."),
         interpret=lambda v: f"{v:+.1%} annualized return",
     )
 )
@@ -253,7 +347,8 @@ register(
         formula="(P_end / P_start)^(1/years) - 1",
         how_to_read=("A CAGR of 0.10 means the investment grew as if it compounded at 10% per year."),
         good_vs_bad=("Higher CAGR indicates stronger long-term growth, but it does not describe volatility or the path taken."),
-        caveats=("CAGR ignores intermediate fluctuations. Two investments with identical CAGR can have completely different risk profiles."),
+        caveats=("CAGR ignores intermediate fluctuations. Two investments with identical CAGR can have completely different risk profiles. "
+            "Needs a strictly positive start/end price ratio - a non-positive ratio returns -1.0 rather than a fractional power of a non-positive number."),
         interpret=lambda v: f"{v:+.1%}/year compounded",
     )
 )
@@ -274,12 +369,13 @@ register(
 register(
     Explanation(
         name="rebased_returns",
-        category="metric",
+        category="function",
         summary=("Rescales a price series to a common starting value while preserving all relative price movements."),
         formula="price / first_price * base",
         how_to_read=("With a base of 100, a value of 150 means the investment increased by 50% from the starting point."),
         good_vs_bad=("Useful for visual comparison of assets with different price levels."),
-        caveats=("Rebasing changes only the displayed scale. It does not change returns, risk, or performance statistics."),
+        caveats=("Rebasing changes only the displayed scale. It does not change returns, risk, or performance statistics. "
+            "Despite living in the returns module, this takes and returns a PRICE series, not a return series - see prices_from_returns for the returns-to-prices direction."),
         interpret=lambda v: f"{v:.2f} rebased value",
     )
 )
@@ -287,7 +383,7 @@ register(
 register(
     Explanation(
         name="excess_returns",
-        category="metric",
+        category="function",
         summary=("The return earned above a benchmark return or risk-free rate during the same period."),
         formula="portfolio return - benchmark or risk-free return",
         how_to_read=("A value of 0.03 means the portfolio outperformed the reference by 3% during that period."),
@@ -300,7 +396,7 @@ register(
 register(
     Explanation(
         name="active_returns",
-        category="metric",
+        category="function",
         summary=("The return difference between a portfolio and its benchmark, representing the performance generated by active decisions."),
         formula="portfolio return - benchmark return",
         how_to_read=("A value of 0.01 means the portfolio exceeded the benchmark by 1% during that period."),

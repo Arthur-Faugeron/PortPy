@@ -56,6 +56,28 @@ def test_annualized_return_constant_series_matches_simple_compounding(constant_r
     assert value == pytest.approx(total ** (252 / n) - 1.0)
 
 
+def test_annualized_return_geometric_handles_total_loss_without_crashing():
+    # A leveraged/short series can compound to a total loss or worse (total <= 0),
+    # which used to raise TypeError: can't convert complex to float when raised to
+    # a fractional power. It should now return -1.0 (complete loss) instead.
+    r = pd.Series([-1.5, 0.01, 0.01])  # first period alone wipes out more than 100%
+    value = m.annualized_return(r, periods_per_year=252, geometric=True)
+    assert value == pytest.approx(-1.0)
+
+
+def test_annualized_return_geometric_exact_total_loss_returns_minus_one():
+    r = pd.Series([-1.0, 0.0, 0.0])  # compounds to exactly 0
+    value = m.annualized_return(r, periods_per_year=252, geometric=True)
+    assert value == pytest.approx(-1.0)
+
+
+def test_cagr_handles_non_positive_price_ratio_without_crashing():
+    idx = pd.bdate_range("2020-01-01", periods=3)
+    prices = pd.Series([100.0, 50.0, 0.0], index=idx)  # end price is zero
+    value = m.cagr(prices, periods_per_year=252)
+    assert value == pytest.approx(-1.0)
+
+
 def test_cagr_matches_price_ratio():
     idx = pd.bdate_range("2020-01-01", periods=253)  # 252 periods elapsed => ~1 year
     prices = pd.Series(np.linspace(100, 120, len(idx)), index=idx)

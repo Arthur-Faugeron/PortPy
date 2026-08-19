@@ -15,11 +15,13 @@ from portpy import core, metrics
 from portpy.explain import Explanation, MetricResult, available, get, register
 from portpy.portfolio import Portfolio
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 
 class _ExplainAPI:
-    """Callable explain facade that also exposes registry helpers."""
+    """
+    Callable explain facade that also exposes registry helpers.
+    """
 
     def __call__(self, obj: Any, *, value: Any = None, print_it: bool = True) -> str:
         return explain_module.explain(obj, value=value, print_it=print_it)
