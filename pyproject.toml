@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "portpy-quant"
-version = "0.1.1"
+version = "0.1.2"
 description = "Portfolio analysis, optimization, and management with built-in, human-readable explanations of every metric, chart, model, and strategy."
 readme = "README.md"
 requires-python = ">=3.10"
