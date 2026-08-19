@@ -6,7 +6,7 @@ The `portpy.explain()` is what turns PortPy from a "numbers out" library into a 
 
 **`Explanation`** - a small, frozen dataclass: `summary`, `formula`, `how_to_read`, `good_vs_bad`, `caveats`, and an optional `interpret` function mapping a live value to a one-line verdict.
 
-**A registry** - a plain `dict[str, Explanation]`, populated by `register(Explanation(...))` calls sitting at the bottom of every metrics module. The text is hand-written prose placed into the source at import time - there's no dynamic generation, no docstring parsing, no LLM in the loop. For example, in [`returns.py`](/src/portpy/metrics/returns.py):
+**A registry** - a plain `dict[str, Explanation]`, populated by `register(Explanation(...))` calls sitting at the bottom of every metrics module. The text is hand-written prose placed into the source at import time - there's no dynamic generation, no docstring parsing, no LLM in the loop. For example, in `src/portpy/metrics/returns.py`:
 
 ```python
 register(

@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
 
@@ -32,7 +34,7 @@ def rolling_metric(
     func: Callable[..., float],
     window: int,
     min_periods: int | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> pd.Series:
     """
     Apply any Series -> float metric function over a rolling window.
@@ -59,7 +61,7 @@ def expanding_metric(
     returns: pd.Series,
     func: Callable[..., float],
     min_periods: int = 2,
-    **kwargs,
+    **kwargs: Any,
 ) -> pd.Series:
     """
     Apply any Series -> float metric function over an expanding (growing) window.

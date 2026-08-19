@@ -196,4 +196,4 @@ See [Roadmap](./roadmap.md) for the current, plain-language version of this tabl
 - Optional extras: `viz` (plotly, matplotlib, seaborn, kaleido), `models` (scikit-learn, arch, hmmlearn), `data` (yfinance, alpaca-py, python-dotenv), `all`, `dev`.
 - Build backend: `hatchling`.
 
-See [CHANGELOG](./CHANGELOG.md) for release history.
+See [CHANGELOG](./changelog.md) for release history.

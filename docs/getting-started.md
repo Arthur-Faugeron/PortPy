@@ -37,7 +37,7 @@ prices = pd.DataFrame(
 )
 ```
 
-If you're pulling real data from `yfinance` or `alpaca-py`, see [`examples/01_yfinance_getting_started.py`](./examples/01_yfinance_getting_started.py) and [`examples/02_alpaca_multiasset_calendar.py`](./examples/02_alpaca_multiasset_calendar.py) for the full fetch-and-clean flow, including calendar alignment for crypto and currency conversion for non-USD assets.
+If you're pulling real data from `yfinance` or `alpaca-py`, see `examples/01_yfinance_getting_started.py` and `examples/02_alpaca_multiasset_calendar.py` for the full fetch-and-clean flow, including calendar alignment for crypto and currency conversion for non-USD assets.
 
 ## Build a Portfolio
 
@@ -88,4 +88,4 @@ portfolio.metrics.compare_to_benchmark(benchmark=benchmark_returns)
 - [Weights & short positions](./guide/weights.md) - building a long/short book.
 - [Calendars & currencies](./guide/calendars-and-currency.md) - combining crypto with equities, or assets in different currencies.
 - [Explainability](./guide/explainability.md) - how `.explain()` works.
-- Run [`examples/tutorial.ipynb`](./examples/tutorial.ipynb) for an exhaustive, working tour of every metric function.
+- Run `examples/tutorial.ipynb` for an exhaustive, working tour of every metric function.

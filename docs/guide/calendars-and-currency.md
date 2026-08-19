@@ -59,4 +59,4 @@ usd_prices = convert_to_base_currency(
 ## Putting it together
 
 See
-[`examples/02_alpaca_multiasset_calendar.py`](/examples/02_alpaca_multiasset_calendar.py) for a full worked example: US equities + gold + bonds + REITs + crypto from Alpaca, a European stock quoted in EUR converted to USD, calendar coverage reported and resolved, and the resulting `Portfolio` tagged with `AssetClass` for each holding.
+`examples/02_alpaca_multiasset_calendar.py` for a full worked example: US equities + gold + bonds + REITs + crypto from Alpaca, a European stock quoted in EUR converted to USD, calendar coverage reported and resolved, and the resulting `Portfolio` tagged with `AssetClass` for each holding.
