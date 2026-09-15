@@ -20,6 +20,8 @@ portfolio.metrics.sharpe_ratio(as_result=True).explain()
 
 - **[Explainability](./guide/explainability.md)** How `.explain()` works, where the text comes from, and `MetricResult`.
 
+- **[Construction, optimization & management](./guide/models.md)** Estimating expected returns/covariance, solving for weights, and rebalancing/monitoring/comparing afterward with `.models`.
+
 - **[API Reference](./api/index.md)** Every function, grouped by module, generated straight from the docstrings.
 
 </div>
@@ -31,6 +33,10 @@ Two things distinguish PortPy from a plain metrics library like `empyrical` or `
 1. **It models an actual portfolio.** Weights - including shorts - asset-class tags, and explicit calendar/currency alignment are first-class, not something you build by hand before calling a flat function library.
 2. **It teaches while it computes.** Every metric is registered with a plain-language explanation of what it is, how to read it, and whether a given value is good or bad - call `.explain()` on any result.
 
+## What's here now
+
+`portpy.models` - estimating inputs (expected returns, covariance, factor models), solving for weights (mean-variance, max Sharpe, risk parity, hierarchical risk parity, Black-Litterman, and more), and managing a book afterward (rebalancing, drift monitoring, before/after comparisons) - see [Construction, optimization & management](./guide/models.md).
+
 ## What's not here yet
 
-`portpy.visualization`, `portpy.models` (optimization, factor models, Monte Carlo), and `portpy.strategies` (backtesting) are designed but not implemented in this release. See the [Roadmap](./roadmap.md) for what's planned, and [Architecture](./architecture.md) for the full design document.
+`portpy.visualization` and `portpy.strategies` (backtesting) are designed but not implemented in this release. See the [Roadmap](./roadmap.md) for what's planned, and [Architecture](./architecture.md) for the full design document.

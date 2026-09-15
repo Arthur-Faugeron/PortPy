@@ -10,7 +10,7 @@ Optional extras:
 
 ```bash
 pip install "portpy-quant[viz]"      # plotly, matplotlib, seaborn (for future visualization work)
-pip install "portpy-quant[models]"   # scikit-learn, arch, hmmlearn (for future models work)
+pip install "portpy-quant[models]"   # scikit-learn, arch, hmmlearn (for portpy.models - estimators/optimization/construction/management)
 pip install "portpy-quant[data]"     # yfinance, alpaca-py, python-dotenv (to run examples/)
 pip install "portpy-quant[all]"      # everything above
 ```
@@ -88,4 +88,5 @@ portfolio.metrics.compare_to_benchmark(benchmark=benchmark_returns)
 - [Weights & short positions](./guide/weights.md) - building a long/short book.
 - [Calendars & currencies](./guide/calendars-and-currency.md) - combining crypto with equities, or assets in different currencies.
 - [Explainability](./guide/explainability.md) - how `.explain()` works.
-- Run `examples/tutorial.ipynb` for an exhaustive, working tour of every metric function.
+- [Construction, optimization & management](./guide/models.md) - estimating inputs, solving for weights, and managing a book with `.models`.
+- Run `examples/metrics_tutorial.ipynb` for an exhaustive, working tour of every metric function, or `examples/models_tutorial.ipynb` for the same over `.models`.

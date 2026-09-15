@@ -21,6 +21,8 @@ See the [Calendars & currencies](../guide/calendars-and-currency.md) and [Weight
 
 ::: portpy.core.currency.convert_to_base_currency
 
+::: portpy.core.currency.calculate_fx_spread
+
 ## Weights
 
 ::: portpy.core.weights.equal_weights

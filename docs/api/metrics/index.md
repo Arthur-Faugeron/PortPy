@@ -12,7 +12,6 @@ self-explaining MetricResult. Portfolio.metrics.<name>() is a thin wrapper aroun
 | [rolling](rolling.md) | Generic rolling/expanding-window engine, plus rolling Sharpe/volatility/beta/correlation. |
 | [distributions](distributions.md) | Descriptive stats, normality test, win rate, monthly returns table, histogram data. |
 | [benchmarks](benchmarks.md) | Alpha, correlation, R², up/down capture ratios, batting average. |
-| [regressions](regressions.md) | OLS (single- and multi-factor), rolling regression, tidy summary tables. |
 | [covariance](covariance.md) | Covariance/correlation matrices, portfolio variance/volatility, risk decomposition. |
 | [summary](summary.md) | One-call tearsheet_summary() and compare_to_benchmark(). |
 | [costs](costs.md) | Turnover from a weight history, net-of-costs returns. |

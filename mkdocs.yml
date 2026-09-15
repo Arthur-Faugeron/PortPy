@@ -41,7 +41,9 @@ nav:
       - The Portfolio object: guide/portfolio.md
       - Weights & short positions: guide/weights.md
       - Calendars & currencies: guide/calendars-and-currency.md
+      - Costs & taxes: guide/costs-and-taxes.md
       - Explainability: guide/explainability.md
+      - Construction, optimization & management: guide/models.md
   - API Reference:
       - Overview: api/index.md
       - Portfolio: api/portfolio.md
@@ -56,10 +58,16 @@ nav:
           - rolling: api/metrics/rolling.md
           - distributions: api/metrics/distributions.md
           - benchmarks: api/metrics/benchmarks.md
-          - regressions: api/metrics/regressions.md
           - covariance: api/metrics/covariance.md
           - summary: api/metrics/summary.md
           - costs: api/metrics/costs.md
+      - models:
+          - Overview: api/models/index.md
+          - base: api/models/base.md
+          - estimators: api/models/estimators.md
+          - optimization: api/models/optimization.md
+          - construction: api/models/construction.md
+          - management: api/models/management.md
   - Architecture: architecture.md
   - Roadmap: roadmap.md
   - Changelog: changelog.md

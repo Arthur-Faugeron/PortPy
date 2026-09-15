@@ -11,11 +11,11 @@ from __future__ import annotations
 from typing import Any
 
 import portpy.explain as explain_module
-from portpy import core, metrics
+from portpy import core, metrics, models
 from portpy.explain import Explanation, MetricResult, available, get, register
 from portpy.portfolio import Portfolio
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
 
 class _ExplainAPI:
@@ -48,5 +48,6 @@ __all__ = [
     "register",
     "core",
     "metrics",
+    "models",
     "__version__",
 ]

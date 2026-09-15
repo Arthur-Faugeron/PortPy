@@ -77,6 +77,18 @@ def test_portfolio_asset_classes_validates_unknown_assets(multi_asset_prices):
         Portfolio(multi_asset_prices, asset_classes={"BOGUS": AssetClass.EQUITY})
 
 
+def test_portfolio_base_currency_defaults_to_none(multi_asset_prices):
+    p = Portfolio(multi_asset_prices)
+    assert p.base_currency is None
+
+
+def test_portfolio_base_currency_is_purely_informational(multi_asset_prices):
+    p = Portfolio(multi_asset_prices, base_currency="EUR")
+    assert p.base_currency == "EUR"
+    # Never used to convert anything - prices are untouched.
+    pd.testing.assert_frame_equal(p.prices, multi_asset_prices.astype(float))
+
+
 def test_portfolio_metrics_dispatcher_autofills_returns(multi_asset_prices):
     p = Portfolio(multi_asset_prices, risk_free_rate=0.02)
     from portpy.metrics.performance import sharpe_ratio
@@ -129,3 +141,4 @@ def test_portfolio_repr_contains_key_info(multi_asset_prices):
     text = repr(p)
     assert "Test Portfolio" in text
     assert "assets=3" in text
+

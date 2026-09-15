@@ -7,6 +7,7 @@ Generated from docstrings. Every function also documents its own parameters, ret
 | [Portfolio](./portfolio.md) | The main entry point. |
 | [core](./core.md) | Asset-class tagging, calendar alignment, currency conversion, weight normalization. |
 | [explain](./explain.md) | Explanation, MetricResult, and the explain() dispatcher. |
-| [metrics](./metrics/index.md) | Every metric function, grouped by submodule: returns, risk, performance, drawdowns, rolling, distributions, benchmarks, regressions, covariance, summary, costs.
+| [metrics](./metrics/index.md) | Every metric function, grouped by submodule: returns, risk, performance, drawdowns, rolling, distributions, benchmarks, covariance, summary, costs.
+| [models](./models/index.md) | Estimators (expected returns, covariance, factor models), optimization solvers, the construction recipe layer, and post-construction management (rebalance/monitor/compare). |
 
-Not yet implemented (see the [Roadmap](../roadmap.md)): portpy.visualization, portpy.models, portpy.strategies.
+Not yet implemented (see the [Roadmap](../roadmap.md)): portpy.visualization, portpy.models.simulation, portpy.strategies.

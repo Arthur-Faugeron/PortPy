@@ -171,7 +171,7 @@ def rolling_correlation(returns_a: pd.Series, returns_b: pd.Series, window: int)
 register(
     Explanation(
         name="rolling_sharpe",
-        category="chart",
+        category="metric",
         summary="Sharpe ratio recalculated over a moving historical window to show whether risk-adjusted performance is stable, improving, or deteriorating through time.",
         formula="(average_return - risk_free_rate) / standard_deviation_of_returns",
         how_to_read="A consistently positive value indicates returns have compensated for risk during that period. Declining values indicate weakening risk-adjusted performance.",
@@ -184,7 +184,7 @@ register(
 register(
     Explanation(
         name="rolling_volatility",
-        category="chart",
+        category="metric",
         summary="Volatility recalculated over a moving historical window to identify changes in risk levels, volatility clustering, and market regimes.",
         formula="rolling_standard_deviation(returns) * sqrt(periods_per_year)",
         how_to_read="Higher values indicate periods where returns are fluctuating more. Sudden increases often correspond to market stress or uncertainty.",
@@ -197,7 +197,7 @@ register(
 register(
     Explanation(
         name="rolling_beta",
-        category="chart",
+        category="metric",
         summary="Beta recalculated over a moving historical window to show how portfolio sensitivity to a benchmark changes over time.",
         formula="covariance(asset_returns, benchmark_returns) / variance(benchmark_returns)",
         how_to_read="Values above 1 indicate the portfolio tends to amplify benchmark movements. Values below 1 indicate lower sensitivity.",
@@ -210,7 +210,7 @@ register(
 register(
     Explanation(
         name="rolling_correlation",
-        category="chart",
+        category="metric",
         summary="Correlation between two return series recalculated over a moving historical window to show whether their relationship changes through time.",
         formula="covariance(asset_a, asset_b) / (volatility_a * volatility_b)",
         how_to_read="Values near 1 indicate the assets move together. Values near -1 indicate opposite movement. Values near 0 indicate weak relationship.",

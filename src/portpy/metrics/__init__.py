@@ -13,7 +13,6 @@ from portpy.metrics import (
     distributions,
     drawdowns,
     performance,
-    regressions,
     returns,
     risk,
     rolling,
@@ -25,7 +24,6 @@ from portpy.metrics.covariance import *  # noqa: F401,F403
 from portpy.metrics.distributions import *  # noqa: F401,F403
 from portpy.metrics.drawdowns import *  # noqa: F401,F403
 from portpy.metrics.performance import *  # noqa: F401,F403
-from portpy.metrics.regressions import *  # noqa: F401,F403
 from portpy.metrics.returns import *  # noqa: F401,F403
 from portpy.metrics.risk import *  # noqa: F401,F403
 from portpy.metrics.rolling import *  # noqa: F401,F403
@@ -38,7 +36,6 @@ __all__ = [
     "distributions",
     "drawdowns",
     "performance",
-    "regressions",
     "returns",
     "risk",
     "rolling",
@@ -49,7 +46,6 @@ __all__ = [
     *distributions.__all__,
     *drawdowns.__all__,
     *performance.__all__,
-    *regressions.__all__,
     *returns.__all__,
     *risk.__all__,
     *rolling.__all__,

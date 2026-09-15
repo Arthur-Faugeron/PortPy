@@ -1,6 +1,6 @@
 name: CI
 
-# If a commit introduces a bug, breaks a Python version, # or violates formatting 
+# If a commit introduces a bug, breaks a Python version, or violates formatting 
 # rules, GitHub marks the commit.
 
 on:
@@ -23,6 +23,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      # dev extras include PyPortfolioOpt/Riskfolio-Lib (cvxpy and friends) for
+      # tests/validation/test_models_vs_libraries.py - noticeably heavier than
+      # Stage 1's empyrical/quantstats, but still dev-only, never a runtime dependency.
       - name: Install portpy with dev extras
         run: pip install -e ".[dev]"
 

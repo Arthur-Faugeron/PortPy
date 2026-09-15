@@ -52,9 +52,26 @@ usd_prices = convert_to_base_currency(
     asset_currencies={"SAP": "EUR"},   # only SAP needs converting; everything else is already USD
     base_currency="USD",
 )
+
+portfolio = Portfolio(usd_prices, base_currency="USD")  # base_currency is a label only - it doesn't convert anything itself
 ```
 
-`fx_rates` is reindexed to `prices.index` and forward-filled, so it doesn't need to share `prices`' exact calendar. Assets missing from `asset_currencies` (or already in `base_currency`) are left untouched.
+`fx_rates` is reindexed to `prices.index` and forward-filled, so it doesn't need to share `prices`' exact calendar. Assets missing from `asset_currencies` (or already in `base_currency`) are left untouched. That forward-fill has no limit by default - a stale or missing FX feed silently carries the last known rate forward indefinitely. Pass `max_staleness=<n periods>` to cap it: beyond `n` consecutive missing rows, the rate (and therefore the converted price) becomes `NaN` instead - a visible gap rather than a silently stale number.
+
+`Portfolio(..., base_currency="USD")` records the label for reporting only, the same way `asset_classes` does - it never triggers a conversion; you still need to call `convert_to_base_currency` yourself first if your data isn't already in that currency.
+
+`convert_to_base_currency` also has no triangulation: with FX feeds for USD/EUR and USD/JPY but no direct EUR/JPY column, it raises rather than cross-computing the rate - fetch or compute the cross rate yourself first.
+
+### FX spread cost
+
+Converting currency also crosses an FX bid-ask spread, which is a real cost for a portfolio that rebalances foreign-currency holdings. If you have real bid/ask FX quotes, turn them into a spread fraction with `calculate_fx_spread`, then feed that into `metrics.costs.fx_spread_costs` (see the [Costs & taxes](costs-and-taxes.md) guide) to estimate the resulting return drag:
+
+```python
+from portpy.core import calculate_fx_spread
+
+spread = calculate_fx_spread(eur_bid_rates, eur_ask_rates)   # fraction of mid, per date
+fx_spread_bps = spread * 10_000   # metrics.costs.fx_spread_costs wants basis points
+```
 
 ## Putting it together
 

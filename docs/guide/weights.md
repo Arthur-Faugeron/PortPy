@@ -57,4 +57,4 @@ Notice the weights were rescaled so they still sum to 1 (net exposure), while th
 portfolio.set_weights({"AAPL": 0.7, "MSFT": 0.3})  # re-validates and re-normalizes
 ```
 
-There is no rebalancing/turnover engine yet (see [Roadmap](../roadmap.md) - `portpy.strategies` isn't built). `set_weights` just replaces the static weight vector used by every subsequent `.metrics` call; see `portpy.metrics.costs` if you want to model transaction costs against an assumed weight-history `DataFrame` you construct yourself.
+`set_weights` just replaces the static weight vector used by every subsequent `.metrics` call - it doesn't generate a trade list or account for turnover on its own. For that, see [`.models.management.rebalance`](./models.md#managing-a-book-afterward), which turns a target allocation (e.g. from `.models.optimize`) into an actual trade list from the portfolio's current weights, or `portpy.metrics.costs` if you want to model transaction costs against an assumed weight-history `DataFrame` you construct yourself.

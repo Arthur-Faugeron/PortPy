@@ -4,20 +4,23 @@ The Portfolio class: PortPy's single entry point for analysis.
 Holds price data and weights, and exposes every function in
 :mod:portpy.metrics as a bound method under .metrics`, automatically
 supplying the portfolio's own returns/prices/weights/risk-free rate as
-defaults wherever a metric function needs them.
+defaults wherever a metric function needs them. `.models` extends the same
+auto-fill pattern to portpy.models' estimators/optimization/construction/
+management namespaces.
 """
 
 from __future__ import annotations
 
 import functools
 import inspect
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any
 
 import numpy as np
 import pandas as pd
 
 from portpy import metrics as _metrics_module
+from portpy import models as _models_module
 from portpy.core.asset import AssetClass
 from portpy.core.weights import equal_weights, normalize_weights
 from portpy.metrics.returns import log_returns, prices_from_returns, simple_returns
@@ -28,13 +31,74 @@ __all__ = ["Portfolio"]
 
 _INPUT_TYPES = ("prices", "returns")
 
+
+class _AutoFillNamespace:
+    """
+    <namespace>.<name>(...) - every function in a plain module (`self._module`),
+    bound to a parent Portfolio.
+
+    Shared by `.metrics` and every `.models.*` namespace: any parameter the
+    caller doesn't supply, and whose name is one this namespace knows how to
+    fill (see `_autofill_kwargs`), is auto-filled from the parent Portfolio's
+    own state. Auto-fill is skipped entirely for any call made with positional
+    arguments, to avoid ambiguous double-binding - use keyword arguments to
+    benefit from the defaults.
+    """
+
+    _module: Any
+
+    def __init__(self, portfolio: Portfolio) -> None:
+        self._portfolio = portfolio
+
+    def __dir__(self) -> list[str]:
+        return sorted(set(super().__dir__()) | set(self._module.__all__))
+
+    def _autofill_kwargs(self, name: str, params: Mapping[str, inspect.Parameter]) -> dict[str, Any]:
+        """
+        Subclasses return `{param_name: value}` for every parameter this
+        namespace knows how to fill from the parent Portfolio - only entries
+        whose key is actually in `params` end up applied.
+        """
+        return {}
+
+    def _postprocess_kwargs(self, call_kwargs: dict[str, Any]) -> dict[str, Any]:
+        """
+        Subclasses may repair fields *inside* an already-provided argument
+        (e.g. completing a partially-specified constraint object) - unlike
+        `_autofill_kwargs`, this runs even on positional-arg calls, since it
+        isn't filling in a missing top-level parameter.
+        """
+        return call_kwargs
+
+    def __getattr__(self, name: str) -> Callable[..., Any]:
+        if name.startswith("_"):
+            raise AttributeError(name)
+        func = getattr(self._module, name, None)
+        if func is None or not callable(func):
+            raise AttributeError(
+                f"{type(self).__name__} has no {name!r}. See {self._module.__name__}.__all__ for the full list."
+            )
+        params = inspect.signature(func).parameters
+
+        @functools.wraps(func)
+        def bound(*args, **kwargs):
+            call_kwargs = dict(kwargs)
+            if not args:
+                for key, value in self._autofill_kwargs(name, params).items():
+                    if key in params and key not in call_kwargs:
+                        call_kwargs[key] = value
+            call_kwargs = self._postprocess_kwargs(call_kwargs)
+            return func(*args, **call_kwargs)
+
+        return bound
+
+
 # Functions where the "returns" parameter means the full multi-asset DataFrame
 # (not the portfolio's own aggregated return series).
-
 _ASSET_LEVEL_RETURNS_FUNCS = frozenset({"covariance_matrix", "correlation_matrix"})
 
 
-class _MetricsNamespace:
+class _MetricsNamespace(_AutoFillNamespace):
     """
     portfolio.metrics.<name>(...) - every function in portpy.metrics, bound to this portfolio.
 
@@ -42,52 +106,216 @@ class _MetricsNamespace:
     the caller doesn't supply is filled in automatically from the parent
     Portfolio (its own aggregated returns/price index/weights/covariance
     matrix); rf and periods_per_year default to the portfolio's
-    risk_free_rate and frequency. Auto-fill is skipped entirely for any call
-    made with positional arguments, to avoid ambiguous double-binding - use
-    keyword arguments to benefit from the defaults.
+    risk_free_rate and frequency.
+    """
+
+    _module = _metrics_module
+
+    def _autofill_kwargs(self, name: str, params: Mapping[str, inspect.Parameter]) -> dict[str, Any]:
+        portfolio = self._portfolio
+        kwargs: dict[str, Any] = {}
+        if "returns" in params:
+            kwargs["returns"] = portfolio.asset_returns() if name in _ASSET_LEVEL_RETURNS_FUNCS else portfolio.returns()
+        if "y" in params:
+            kwargs["y"] = portfolio.returns()
+        if "prices" in params:
+            kwargs["prices"] = portfolio.price_index()
+        if "weights" in params:
+            kwargs["weights"] = portfolio.weights
+        if "cov_matrix" in params:
+            kwargs["cov_matrix"] = self.covariance_matrix()
+        if "rf" in params:
+            kwargs["rf"] = portfolio.risk_free_rate
+        if "periods_per_year" in params:
+            kwargs["periods_per_year"] = portfolio.frequency
+        return kwargs
+
+
+def _fill_turnover_cap_current_weights(constraints: Any, portfolio: Portfolio) -> Any:
+    """
+    Replace any `TurnoverCap` in `constraints` that has `current_weights=None`
+    with a copy carrying `portfolio`'s own current weights.
+
+    `TurnoverCap` is a frozen dataclass, so a bare `TurnoverCap(max_turnover=...)`
+    built via a plain top-level import (rather than through
+    `portfolio.models.construction.TurnoverCap(...)`) has no way to pick up a
+    default afterward on its own - every `.models` entry point that accepts
+    `constraints=` runs its list through this first, so which import path
+    built the object doesn't matter.
+    """
+    if not constraints:
+        return constraints
+    from dataclasses import replace
+
+    from portpy.models.base import TurnoverCap
+
+    return [
+        replace(c, current_weights=portfolio.weights) if isinstance(c, TurnoverCap) and c.current_weights is None else c
+        for c in constraints
+    ]
+
+
+class _ModelsAutoFillNamespace(_AutoFillNamespace):
+    """
+    Shared auto-fill logic for every `portpy.models.*` sub-namespace.
+
+    `y` means the full multi-asset return DataFrame for functions listed in
+    `_asset_level_y_funcs` (subclass-configurable - e.g. estimators.expected_returns
+    needs the whole panel), and the portfolio's own aggregated return series otherwise
+    (e.g. estimators.capm's `y` is the thing being regressed, one series).
+    """
+
+    _asset_level_y_funcs: frozenset[str] = frozenset()
+
+    def _autofill_kwargs(self, name: str, params: Mapping[str, inspect.Parameter]) -> dict[str, Any]:
+        portfolio = self._portfolio
+        kwargs: dict[str, Any] = {}
+        if "y" in params:
+            kwargs["y"] = portfolio.asset_returns() if name in self._asset_level_y_funcs else portfolio.returns()
+        if "expected_returns" in params:
+            kwargs["expected_returns"] = portfolio.models.estimators.expected_returns()
+        if "cov_matrix" in params:
+            kwargs["cov_matrix"] = portfolio.models.estimators.covariance()
+        if "market_weights" in params:
+            kwargs["market_weights"] = portfolio.weights
+        if "current_weights" in params:
+            kwargs["current_weights"] = portfolio.weights
+        if "rf" in params:
+            kwargs["rf"] = portfolio.risk_free_rate
+        if "periods_per_year" in params:
+            kwargs["periods_per_year"] = portfolio.frequency
+        return kwargs
+
+    def _postprocess_kwargs(self, call_kwargs: dict[str, Any]) -> dict[str, Any]:
+        if "constraints" in call_kwargs:
+            call_kwargs["constraints"] = _fill_turnover_cap_current_weights(call_kwargs["constraints"], self._portfolio)
+        return call_kwargs
+
+
+class _EstimatorsNamespace(_ModelsAutoFillNamespace):
+    """portfolio.models.estimators.<name>(...) - see portpy.models.estimators."""
+
+    _module = _models_module.estimators
+    _asset_level_y_funcs = frozenset({"expected_returns", "covariance"})
+
+
+class _OptimizationNamespace(_ModelsAutoFillNamespace):
+    """portfolio.models.optimization.<name>(...) - see portpy.models.optimization."""
+
+    _module = _models_module.optimization
+
+
+class _ConstructionNamespace(_ModelsAutoFillNamespace):
+    """portfolio.models.construction.<name>(...) - see portpy.models.construction."""
+
+    _module = _models_module.construction
+    _asset_level_y_funcs = frozenset({"build"})
+
+
+class _ManagementNamespace(_ModelsAutoFillNamespace):
+    """portfolio.models.management.<name>(...) - see portpy.models.management."""
+
+    _module = _models_module.management
+
+    def compare(self, other: Any) -> Any:
+        """
+        Compare this portfolio against `other` (a Portfolio, ModelResult, or weight Series).
+
+        A hand-written override (rather than the generic auto-fill dispatch)
+        so the common case is a single positional argument - see
+        `portpy.models.management.compare` for the underlying pure function
+        and what its result carries.
+        """
+        return _models_module.management.compare(self._portfolio, other)
+
+
+class _ModelsNamespace:
+    """
+    portfolio.models - a namespace of namespaces over portpy.models, each
+    reusing `_ModelsAutoFillNamespace` so `.estimators`/`.optimization`/
+    `.construction`/`.management` all auto-fill from this portfolio's own data.
+
+    `.optimize`/`.build`/`.efficient_frontier` are also exposed directly here
+    (in addition to `.construction.optimize`/`.construction.build`/
+    `.construction.efficient_frontier`, the same functions) since they're the
+    two or three calls most users reach for first.
     """
 
     def __init__(self, portfolio: Portfolio) -> None:
         self._portfolio = portfolio
+        self.estimators = _EstimatorsNamespace(portfolio)
+        self.optimization = _OptimizationNamespace(portfolio)
+        self.construction = _ConstructionNamespace(portfolio)
+        self.management = _ManagementNamespace(portfolio)
+
+    def optimize(
+        self,
+        expected_returns: pd.Series | None = None,
+        cov_matrix: pd.DataFrame | None = None,
+        method: str = "mean_variance",
+        constraints: list[Any] | None = None,
+        **kwargs: Any,
+    ):
+        """See `portpy.models.construction.optimize` - expected_returns/cov_matrix default to this portfolio's own estimates."""
+        if expected_returns is None:
+            expected_returns = self.estimators.expected_returns()
+        if cov_matrix is None:
+            cov_matrix = self.estimators.covariance()
+        constraints = _fill_turnover_cap_current_weights(constraints, self._portfolio)
+        return _models_module.construction.optimize(
+            expected_returns=expected_returns, cov_matrix=cov_matrix, method=method, constraints=constraints, **kwargs
+        )
+
+    def build(
+        self,
+        y: pd.DataFrame | None = None,
+        method: str = "mean_variance",
+        constraints: list[Any] | None = None,
+        expected_returns_kwargs: dict[str, Any] | None = None,
+        covariance_kwargs: dict[str, Any] | None = None,
+        **kwargs: Any,
+    ):
+        """See `portpy.models.construction.build` - y defaults to this portfolio's own asset returns."""
+        if y is None:
+            y = self._portfolio.asset_returns()
+        constraints = _fill_turnover_cap_current_weights(constraints, self._portfolio)
+        return _models_module.construction.build(
+            y=y,
+            method=method,
+            constraints=constraints,
+            expected_returns_kwargs=expected_returns_kwargs,
+            covariance_kwargs=covariance_kwargs,
+            **kwargs,
+        )
+
+    def efficient_frontier(
+        self,
+        expected_returns: pd.Series | None = None,
+        cov_matrix: pd.DataFrame | None = None,
+        n_points: int = 50,
+        constraints: list[Any] | None = None,
+        min_return: float | None = None,
+        max_return: float | None = None,
+    ):
+        """See `portpy.models.construction.efficient_frontier` - expected_returns/cov_matrix default to this portfolio's own estimates."""
+        if expected_returns is None:
+            expected_returns = self.estimators.expected_returns()
+        if cov_matrix is None:
+            cov_matrix = self.estimators.covariance()
+        constraints = _fill_turnover_cap_current_weights(constraints, self._portfolio)
+        return _models_module.construction.efficient_frontier(
+            expected_returns=expected_returns,
+            cov_matrix=cov_matrix,
+            n_points=n_points,
+            constraints=constraints,
+            min_return=min_return,
+            max_return=max_return,
+        )
 
     def __dir__(self) -> list[str]:
-        return sorted(set(super().__dir__()) | set(_metrics_module.__all__))
-
-    def __getattr__(self, name: str) -> Callable[..., Any]:
-        if name.startswith("_"):
-            raise AttributeError(name)
-        func = getattr(_metrics_module, name, None)
-        if func is None or not callable(func):
-            raise AttributeError(
-                f"Portfolio.metrics has no {name!r}. See portpy.metrics.__all__ for the full list."
-            )
-
-        portfolio = self._portfolio
-        params = inspect.signature(func).parameters
-
-        @functools.wraps(func)
-        def bound(*args, **kwargs):
-            call_kwargs = dict(kwargs)
-            if not args:
-                if "returns" in params and "returns" not in call_kwargs:
-                    call_kwargs["returns"] = (
-                        portfolio.asset_returns() if name in _ASSET_LEVEL_RETURNS_FUNCS else portfolio.returns()
-                    )
-                if "y" in params and "y" not in call_kwargs:
-                    call_kwargs["y"] = portfolio.returns()
-                if "prices" in params and "prices" not in call_kwargs:
-                    call_kwargs["prices"] = portfolio.price_index()
-                if "weights" in params and "weights" not in call_kwargs:
-                    call_kwargs["weights"] = portfolio.weights
-                if "cov_matrix" in params and "cov_matrix" not in call_kwargs:
-                    call_kwargs["cov_matrix"] = self.covariance_matrix()
-                if "rf" in params and "rf" not in call_kwargs:
-                    call_kwargs["rf"] = portfolio.risk_free_rate
-                if "periods_per_year" in params and "periods_per_year" not in call_kwargs:
-                    call_kwargs["periods_per_year"] = portfolio.frequency
-            return func(*args, **call_kwargs)
-
-        return bound
+        return sorted(
+            set(super().__dir__()) | {"estimators", "optimization", "construction", "management", "optimize", "build", "efficient_frontier"}
+        )
 
 
 class Portfolio:
@@ -112,6 +340,12 @@ class Portfolio:
             .metrics calls.
         asset_classes: Optional {symbol: AssetClass} tags, purely for
             reporting/grouping - see portpy.core.AssetClass.
+        base_currency: Optional 3-letter currency code (e.g. "USD"), purely
+            informational/for reporting - like asset_classes, it's never used
+            to convert anything. `data` must already be in a single currency
+            by the time it reaches Portfolio; run
+            portpy.core.convert_to_base_currency yourself first if it isn't,
+            then pass the currency you converted to here as a label.
     """
 
     def __init__(
@@ -123,6 +357,7 @@ class Portfolio:
         frequency: int = TRADING_DAYS_PER_YEAR,
         risk_free_rate: float = DEFAULT_RISK_FREE_RATE,
         asset_classes: dict[str, AssetClass] | None = None,
+        base_currency: str | None = None,
     ) -> None:
         if not isinstance(data, pd.DataFrame):
             raise TypeError(
@@ -150,9 +385,11 @@ class Portfolio:
             if unknown:
                 raise ValueError(f"asset_classes references unknown assets: {sorted(unknown)}")
         self.asset_classes: dict[str, AssetClass] = dict(asset_classes or {})
+        self.base_currency: str | None = base_currency
 
         self.set_weights(weights if weights is not None else equal_weights(self._asset_names))
         self.metrics = _MetricsNamespace(self)
+        self.models = _ModelsNamespace(self)
 
     # -- Basic accessors -----------------------------------------------------
 
@@ -220,7 +457,8 @@ class Portfolio:
         The portfolio's own return series: asset returns combined by current weights.
 
         Assumes weights are held constant each period (rebalanced back to target
-        every period). For turnover/rebalancing effects, see :mod:portpy.strategies.
+        every period). For turnover/rebalancing effects, see :mod:portpy.models.management
+        and (eventually) :mod:portpy.strategies.
 
         Args:
             period: Compound returns over non-overlapping blocks of this many

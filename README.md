@@ -58,8 +58,16 @@ This result:
 - **Explains itself.** `.explain()` on any result — a plain-language card covering what it is,
   how to read it, good vs. bad, and known caveats.
 - **Numerically validated.** Cross-checked against [`empyrical`](https://github.com/stefan-jansen/empyrical-reloaded)
-  and [`quantstats`](https://github.com/ranaroussi/quantstats) on real market data — see
+  and [`quantstats`](https://github.com/ranaroussi/quantstats) for metrics, and
+  [`PyPortfolioOpt`](https://github.com/robertmartin8/PyPortfolioOpt),
+  [`Riskfolio-Lib`](https://github.com/dcajasn/Riskfolio-Lib), and
+  [`skfolio`](https://github.com/skfolio/skfolio) for every optimizer — including
+  negative-weight (short) solutions, not just long-only — on real market data, see
   `tests/validation/`.
+- **Builds portfolios, not just measures them.** `portfolio.models` estimates expected
+  returns/covariance, solves for weights (mean-variance, max Sharpe, risk parity, hierarchical
+  risk parity, Black-Litterman, ...), and manages a book afterward (rebalancing, drift
+  monitoring, before/after comparisons) — every result explains itself the same way metrics do.
 
 ## Install
 
@@ -76,17 +84,18 @@ pip install "portpy-quant[all]"        # everything
 - [User Guide](./docs/index.md) — the `Portfolio` object, weights & shorts, calendar/currency
   alignment, the explainability layer
 - [API Reference](./docs/api/index.md) — every function, by module
-- [Roadmap](./docs/roadmap.md) — what's implemented today vs. planned (`models`, `strategies`,
-  `visualization` are not yet built)
-- [`examples/`](./examples/) — runnable scripts and a full tutorial notebook exercising every
-  metric against live Alpaca + Fed (FRED) data
+- [Roadmap](./docs/roadmap.md) — what's implemented today vs. planned (`visualization` and
+  `strategies` are not yet built)
+- [`examples/`](./examples/) — runnable scripts, `metrics_debug.ipynb`/`metrics_tutorial.ipynb`
+  exercising every metric against live Alpaca + Fed (FRED) data, and
+  `models_debug.ipynb`/`models_tutorial.ipynb` doing the same for `.models`
 
 ## Status
 
 PortPy is pre-1.0 (`Development Status :: 4 - Beta`). **Metrics and core** (calendar/currency
-alignment, weights, the explainability layer) are implemented and tested. **Visualization,
-models/optimization, and strategies/backtesting** are designed but not yet built — see the
-[Roadmap](./docs/roadmap.md).
+alignment, weights, the explainability layer) and **`.models`** (estimators, optimization,
+construction, management) are implemented and tested. **Visualization and
+strategies/backtesting** are designed but not yet built — see the [Roadmap](./docs/roadmap.md).
 
 ## License
 

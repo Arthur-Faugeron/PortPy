@@ -60,9 +60,10 @@ from portpy.explain import available, get, MetricResult
 from portpy.explain import available
 
 available("metric")    # every registered metric name
-available("chart")     # rolling/other chart-shaped explanations (drawdown_chart, etc.)
+available("function")  # non-scalar/utility functions (rolling_metric, describe, monitor, ...)
+available("model")     # every optimizer/estimator/management model type (mean_variance, capm, rebalance, ...)
 ```
 
 ## Extending it
 
-Any function can register a card - this isn't limited to `portpy.metrics`. Future `portpy.visualization`/`portpy.models`/`portpy.strategies` code is expected to register `Explanation`s the same way, tagged `category="chart"`, `"model"`, or `"strategy"`.
+Any function can register a card - this isn't limited to `portpy.metrics`. `portpy.models` (estimators, optimization, construction, management) registers one `Explanation` per model *type*, tagged `category="model"`, exactly the same way - see [Construction, optimization & management](./models.md). Charts never register their own `Explanation`: no name is ever tagged `category="chart"` - a chart instead calls `visualization.base.attach_explain(fig, name)` to recycle whichever metric's or model's card it's built from (`portpy.strategies` is expected to follow the `category="model"`-style pattern too, once it ships).

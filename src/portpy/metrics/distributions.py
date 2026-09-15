@@ -282,7 +282,7 @@ register(
 register(
     Explanation(
         name="monthly_returns_table",
-        category="chart",
+        category="function",
         summary="Compounded return for every calendar month, laid out as a year x month grid (the data behind a monthly-returns heatmap).",
         how_to_read="Each cell is that month's compounded return; the 'Year' column is the full calendar year's compounded return. Read row-by-row to spot seasonal patterns or bad years; column-by-column to spot a consistently weak/strong calendar month.",
         good_vs_bad="More green (positive) than red (negative) cells, with the Year column trending positive, is the visual 'good' pattern.",
@@ -293,7 +293,7 @@ register(
 register(
     Explanation(
         name="return_histogram_data",
-        category="chart",
+        category="function",
         summary="The raw bin counts and edges describing the shape of the return distribution.",
         how_to_read="A tall, narrow, symmetric hump centered near (or slightly above) zero is 'textbook'. Look for a long left tail (crash risk) or a bimodal shape (regime-switching behavior).",
         good_vs_bad="Not graded directly - use skewness/kurtosis/normality_test for quantitative judgments about the shape shown here.",

@@ -92,3 +92,26 @@ def test_package_level_explain_api_is_callable_and_exposes_registry_helpers():
     assert callable(pt.explain)
     assert "sharpe_ratio" in pt.explain.available()
     assert pt.explain.get("sharpe_ratio").name == "sharpe_ratio"
+
+
+# `portpy.models` registers "model" (mean_variance, black_litterman, capm, ...) and several
+# "function" (bid_ask_spreads, tax_impact, ...) explanations alongside the "metric" ones
+# above - make sure every one of them (not just "sharpe_ratio") is actually registered and
+# renders through the same string-name dispatch path, importing the subpackages that own
+# each registration so this doesn't depend on import order elsewhere in the test run.
+def _all_registered_names() -> list[str]:
+    import portpy.core  # noqa: F401  (registers currency-related "function" explanations)
+    import portpy.metrics  # noqa: F401
+    import portpy.models  # noqa: F401
+
+    names = []
+    for category in ("metric", "model", "function"):
+        names.extend(available(category))
+    return names
+
+
+@pytest.mark.parametrize("name", _all_registered_names())
+def test_every_registered_explanation_renders_by_name(name):
+    text = explain(name, print_it=False)
+    assert name in text
+    assert "This result:" not in text  # string-name dispatch never calls interpret()
